@@ -97,13 +97,20 @@ def guard(summary: Mapping, proposal: Proposal, *, requires_approval: bool, aggr
     else:
         level = rule.send_now_severity
         if chosen is None:
-            chosen = template_alert(level, summary["herd_size"], place)
+            send = template_alert(level, summary["herd_size"], place)
             notes.append(f"risk {risk}: responder proposed no alert; sent the {level} template alert")
         elif chosen.severity != level:
             change = "raised" if rank(chosen.severity) < rank(level) else "lowered"
-            notes.append(f"risk {risk}: {change} the alert from {chosen.severity} to {level}")
-        send_now = [chosen.model_copy(update={"severity": level})]
-        if rule.escalation_severity and chosen.severity == rule.escalation_severity:
+            # The model wrote its wording for another level ("DANGER: ..." as a warning, or a mild advisory as a
+            # danger), so only the level is changed here and the text must change with it: send the template
+            # written for this level. The proposed text is still used where its own level is allowed (escalation).
+            send = template_alert(level, summary["herd_size"], place)
+            notes.append(f"risk {risk}: {change} the alert from {chosen.severity} to {level}; the {level} template "
+                         "text is sent because the proposed wording was written for another level")
+        else:
+            send = chosen
+        send_now = [send]
+        if rule.escalation_severity and chosen is not None and chosen.severity == rule.escalation_severity:
             escalation = [chosen.model_copy(update={"severity": rule.escalation_severity})]
         elif rule.escalation_severity and rule.hold_escalation and requires_approval:
             # The tracker allows an escalation but no valid proposal asked for one: offer the officer a template
