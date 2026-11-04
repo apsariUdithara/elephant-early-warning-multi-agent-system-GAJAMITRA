@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.6.0...v1.7.0) (2026-11-04)
+
+### Features
+
+* send real SMS through Twilio when enabled, with timeouts and failures recorded - GM-18 ([#18](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/18)) ([927ac90](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/927ac905db722e72548c196fdd101697785c8781))
+
 ## [1.6.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.5.0...v1.6.0) (2026-11-04)
 
 ### Features
