@@ -12,17 +12,30 @@ VELOCITY_WINDOW_S = 2.0
 NEAR_BODIES = 3.0  # closer to the line than this many body heights -> at least "medium", even standing still
 
 
+class SamOutputError(ValueError):
+    """SAM 3.1 sent text that isn't the expected box format. Never treat this as "no elephants"."""
+
+
 def parse_sam(text):
-    """SAM 3.1 streamed text -> ({frame: {obj_id: (x1, y1, x2, y2)}}, (frame_w, frame_h))."""
+    """SAM 3.1 streamed text -> ({frame: {obj_id: (x1, y1, x2, y2)}}, (frame_w, frame_h)).
+
+    Empty text means SAM matched nothing (it sends no deltas then). Non-empty text without a single
+    readable box raises SamOutputError, so an error message or a format change can't pass as "no elephants".
+    """
     frames, size = {}, None
     parts = FRAME.split(text)
     for i in range(1, len(parts), 2):
         boxes = {}
         for obj_id, fields in OBJ.findall(parts[i + 1]):
             kv = dict(f.split("=", 1) for f in fields.split(";") if "=" in f)
-            boxes[int(obj_id)] = tuple(float(kv[k]) for k in ("x1", "y1", "x2", "y2"))
-            size = (int(float(kv["w"])), int(float(kv["h"])))
+            try:
+                boxes[int(obj_id)] = tuple(float(kv[k]) for k in ("x1", "y1", "x2", "y2"))
+                size = (int(float(kv["w"])), int(float(kv["h"])))
+            except (KeyError, ValueError) as e:
+                raise SamOutputError(f"unreadable box for object {obj_id} in frame {parts[i]}: {fields[:80]!r}") from e
         frames[int(parts[i])] = boxes
+    if text.strip() and size is None:
+        raise SamOutputError(f"SAM output has no readable boxes: {text.strip()[:120]!r}")
     return frames, size
 
 
