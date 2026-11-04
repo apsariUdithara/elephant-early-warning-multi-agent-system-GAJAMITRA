@@ -1,5 +1,6 @@
-# Local infrastructure. The backend, ai-service and caddy services join in Phase 7 (docs/IMPLEMENTATION_PLAN.md).
-# Ports bind to 127.0.0.1 only, so nothing is reachable from the network.
+# The GajaMitra stack (plan Phase 7): Postgres, RabbitMQ, the Spring backend and the AI worker.
+# Ports bind to 127.0.0.1 only, so nothing is reachable from the network. Caddy (HTTPS) and the frontend come later.
+#   docker compose up -d --build        (needs .env, see .env.example)
 services:
   postgres:
     image: postgres:17
@@ -25,5 +26,63 @@ services:
       interval: 10s
       retries: 10
 
+  backend:
+    build: {context: ., dockerfile: backend/Dockerfile}
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-gajamitra}
+      POSTGRES_USER: ${POSTGRES_USER:-gajamitra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-gajamitra}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      MCP_API_KEY: ${MCP_API_KEY:?set MCP_API_KEY in .env}
+      GAJAMITRA_ADMIN_USERNAME: ${GAJAMITRA_ADMIN_USERNAME:-}
+      GAJAMITRA_ADMIN_PASSWORD: ${GAJAMITRA_ADMIN_PASSWORD:-}
+      GAJAMITRA_SECURE_COOKIES: ${GAJAMITRA_SECURE_COOKIES:-true}
+      GAJAMITRA_VIDEO_DIR: /data/videos
+      GAJAMITRA_SMS_ENABLED: ${GAJAMITRA_SMS_ENABLED:-false}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+    # Local only. Behind Caddy later, /mcp must stay unreachable from outside (plan Phase 3, Security).
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: [videos:/data/videos]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      retries: 20
+      start_period: 20s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  worker:
+    build: {context: ., dockerfile: ai-service/Dockerfile}
+    # Starts once Spring is healthy, i.e. its queues exist and /mcp answers.
+    depends_on:
+      backend: {condition: service_healthy}
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-gajamitra}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-gajamitra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-gajamitra}
+      MCP_URL: http://backend:8080/mcp
+      MCP_API_KEY: ${MCP_API_KEY}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+    # The worker reads the clips the backend stored (same path in both containers).
+    volumes: [videos:/data/videos:ro]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # A crash loop stops after 5 tries instead of hammering the broker and the Meta API.
+    restart: on-failure:5
+
 volumes:
   pgdata:
+  videos:

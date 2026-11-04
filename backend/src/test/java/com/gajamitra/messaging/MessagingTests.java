@@ -113,8 +113,8 @@ class MessagingTests {
 	@Test
 	void queueingAnAnalysisPublishesTheRequestAfterCommit() {
 		UUID id = analyses.queue(site, "/data/v.mp4", List.of(0.0, 0.5, 1.0, 0.5, 0.5, 0.9));
-		assertThat(received(MessagingConfiguration.REQUESTS)).contains("\"analysis_id\":\"" + id + "\"",
-				"\"schema_version\":1", "\"video_path\":\"/data/v.mp4\"");
+		assertThat(receivedFor(MessagingConfiguration.REQUESTS, id)).contains("\"schema_version\":1",
+				"\"video_path\":\"/data/v.mp4\"");
 		assertThat(status(id)).isEqualTo("QUEUED");
 	}
 
@@ -211,10 +211,10 @@ class MessagingTests {
 	void theOfficersDecisionPublishesOneResume() {
 		UUID id = awaitingApproval();
 		assertThat(approvals.decide(approvalOf(id), officer, Decision.APPROVE, "go")).isTrue();
-		assertThat(received(MessagingConfiguration.RESUME)).contains("\"decision\":\"approve\"",
-				"\"analysis_id\":\"" + id + "\"");
+		// Only this analysis's messages count: the shared queue may hold other tests' resumes (timeout job, recovery).
+		assertThat(receivedFor(MessagingConfiguration.RESUME, id)).contains("\"decision\":\"approve\"");
 		assertThat(approvals.decide(approvalOf(id), officer, Decision.REJECT, "changed my mind")).isFalse();
-		assertThat(received(MessagingConfiguration.RESUME)).isNull();
+		assertThat(receivedFor(MessagingConfiguration.RESUME, id)).isNull();
 	}
 
 	@Test
@@ -225,7 +225,7 @@ class MessagingTests {
 		assertThat(approvals.timeOutExpired(later)).isZero();
 		assertThat(jdbc.queryForObject("select status from approval_request where analysis_id = ?", String.class, id))
 			.isEqualTo("TIMED_OUT");
-		assertThat(received(MessagingConfiguration.RESUME)).contains("\"decision\":\"timeout\"");
+		assertThat(receivedFor(MessagingConfiguration.RESUME, id)).contains("\"decision\":\"timeout\"");
 	}
 
 	@Test

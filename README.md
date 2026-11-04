@@ -110,6 +110,20 @@ uvicorn gajamitra.app:app --reload
 
 Open http://127.0.0.1:8000. Upload an MP4, click **Set village boundary** (two points on the boundary line, then one point on the village side), and press **Analyze**.
 
+## Run the full stack
+
+```powershell
+copy .env.example .env          # then set POSTGRES_PASSWORD, RABBITMQ_DEFAULT_PASS, MCP_API_KEY,
+                                # GAJAMITRA_ADMIN_USERNAME / _PASSWORD (12+ chars), MODEL_API_KEY;
+                                # GAJAMITRA_SECURE_COOKIES=false when using plain http://127.0.0.1
+docker compose up -d --build    # postgres, rabbitmq, backend (http://127.0.0.1:8080), worker
+```
+
+Log in with `POST /api/login` (form fields `username`, `password`; send the `XSRF-TOKEN` cookie back as the
+`X-XSRF-TOKEN` header on every write), create a site and villagers under `/api/sites`, and upload a clip to
+`POST /api/analyses`. New sites are in SHADOW mode: alerts are stored and logged, no SMS is sent.
+Analysing a clip calls the Meta API and spends credits.
+
 ## Checks
 
 | Part | Command (run inside the folder) |
