@@ -1,6 +1,9 @@
 package com.gajamitra.sms;
 
-/** Port to the SMS provider. Twilio comes in its own slice; until then {@link LoggingSmsGateway} is used. */
+/**
+ * Port to the SMS provider: {@link TwilioSmsGateway} when gajamitra.sms.enabled=true, otherwise
+ * {@link LoggingSmsGateway}. Implementations must time out rather than block.
+ */
 public interface SmsGateway {
 
 	/**
