@@ -87,9 +87,10 @@ class SchemaConstraintsTests {
 
 	@Test
 	void alertMustBelongToAnExistingAnalysis() {
+		UUID missing = UUID.randomUUID();
 		assertThatThrownBy(() -> jdbc.update("""
 				insert into alert (analysis_id, idempotency_key, stage, severity, text_en, text_si, text_ta, shadow)
-				values (gen_random_uuid(), 'x:now:0', 'NOW', 'warning', 'en', 'si', 'ta', true)"""))
+				values (?, ?, 'NOW', 'warning', 'en', 'si', 'ta', true)""", missing, missing + ":now:0"))
 				.isInstanceOf(DataIntegrityViolationException.class);
 	}
 
@@ -115,6 +116,52 @@ class SchemaConstraintsTests {
 				insert into approval_request (analysis_id, proposed_alert, expires_at, status)
 				values (?, '{}'::jsonb, now(), 'TIMED_OUT')""", analysis))
 				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void anIdempotencyKeyMustBelongToItsAnalysis() {
+		assertThatThrownBy(() -> alert(UUID.randomUUID() + ":now:0", "warning"))
+				.isInstanceOf(DataIntegrityViolationException.class);
+		assertThatThrownBy(() -> jdbc.update(
+				"insert into officer_report (analysis_id, idempotency_key, report) values (?, ?, 'r')", analysis,
+				UUID.randomUUID() + ":now:report")).isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void deletingAVillagerKeepsTheirDeliveryRecordWithoutTheLink() {
+		UUID a = alert(analysis + ":now:0", "warning");
+		jdbc.update("insert into alert_delivery (alert_id, subscriber_id, status) values (?, ?, 'SENT')", a, subscriber);
+		jdbc.update("delete from subscriber where id = ?", subscriber);
+		var row = jdbc.queryForMap("select subscriber_id, status from alert_delivery where alert_id = ?", a);
+		assertThat(row.get("subscriber_id")).isNull();
+		assertThat(row).containsEntry("status", "SENT");
+	}
+
+	@Test
+	void footageIsPurgedTogetherWithItsDeletionTime() {
+		jdbc.update("update analysis set video_path = null, video_deleted_at = now() where id = ?", analysis);
+		assertThatThrownBy(() -> jdbc.update("update analysis set video_deleted_at = null where id = ?", analysis))
+				.isInstanceOf(DataIntegrityViolationException.class);
+		assertThatThrownBy(() -> jdbc.update(
+				"insert into analysis (site_id, boundary) values (?, '{0,0.5,1,0.5,0.5,0.9}')", site))
+				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void anOfficerDecisionNamesTheOfficerAndANewApprovalCanFollowIt() {
+		UUID officer = jdbc.queryForObject(
+				"insert into app_user (username, password_hash, role) values (?, 'h', 'OFFICER') returning id",
+				UUID.class, "officer" + System.nanoTime());
+		String pending = """
+				insert into approval_request (analysis_id, proposed_alert, expires_at)
+				values (?, '{}'::jsonb, now() + interval '2 minutes') returning id""";
+		UUID first = jdbc.queryForObject(pending, UUID.class, analysis);
+		assertThatThrownBy(() -> jdbc.update(
+				"update approval_request set status = 'APPROVED', decided_at = now() where id = ?", first))
+				.isInstanceOf(DataIntegrityViolationException.class);
+		jdbc.update("update approval_request set status = 'APPROVED', decided_at = now(), decided_by = ? where id = ?",
+				officer, first);
+		assertThat(jdbc.queryForObject(pending, UUID.class, analysis)).isNotNull();
 	}
 
 	@Test

@@ -33,7 +33,8 @@ create table app_user (
 create table analysis (
     id             uuid primary key default gen_random_uuid(),  -- also the Langfuse trace id and LangGraph thread id
     site_id        uuid not null references site (id),
-    video_path     text not null,
+    video_path     text,  -- cleared by the 30-day footage purge; the row stays for the 1-year alert history
+    video_deleted_at timestamptz,
     boundary       double precision[] not null check (cardinality(boundary) = 6),
     status         text not null default 'QUEUED'
                    check (status in ('QUEUED', 'RUNNING', 'AWAITING_APPROVAL', 'COMPLETED', 'FAILED')),
@@ -42,10 +43,12 @@ create table analysis (
     result         jsonb,
     failure_reason text,
     created_at     timestamptz not null default now(),
-    updated_at     timestamptz not null default now()
+    updated_at     timestamptz not null default now(),  -- set by the code on every update (no trigger)
+    check ((video_path is null) = (video_deleted_at is not null))
 );
 create index analysis_status_created_idx on analysis (status, created_at);  -- republish stale QUEUED analyses
 create index analysis_site_created_idx on analysis (site_id, created_at desc);
+create index analysis_footage_purge_idx on analysis (created_at) where video_path is not null;
 
 create table alert (
     id              uuid primary key default gen_random_uuid(),
@@ -57,26 +60,32 @@ create table alert (
     text_si         text not null,
     text_ta         text not null,
     shadow          boolean not null,
-    created_at      timestamptz not null default now()
+    created_at      timestamptz not null default now(),
+    check (idempotency_key like analysis_id::text || ':%')  -- a key can't dedupe across analyses (invariant 4)
 );
 create index alert_analysis_idx on alert (analysis_id);
+create index alert_created_idx on alert (created_at);
 
 create table alert_delivery (
     id            uuid primary key default gen_random_uuid(),
     alert_id      uuid not null references alert (id),
-    subscriber_id uuid not null references subscriber (id),
+    -- Deleting a villager keeps the delivery record for the audit trail but drops the link to their phone.
+    subscriber_id uuid references subscriber (id) on delete set null,
     status        text not null default 'PENDING' check (status in ('PENDING', 'SENT', 'FAILED', 'SKIPPED_SHADOW')),
     provider_id   text,
+    created_at    timestamptz not null default now(),
     updated_at    timestamptz not null default now(),
     unique (alert_id, subscriber_id)  -- one SMS per alert per villager, even after retries
 );
+create index delivery_pending_idx on alert_delivery (updated_at) where status = 'PENDING';  -- incomplete dispatch
 
 create table officer_report (
     id              uuid primary key default gen_random_uuid(),
     analysis_id     uuid not null references analysis (id),
     idempotency_key text not null unique,
     report          text not null,
-    created_at      timestamptz not null default now()
+    created_at      timestamptz not null default now(),
+    check (idempotency_key like analysis_id::text || ':%')
 );
 
 create table approval_request (
@@ -88,10 +97,13 @@ create table approval_request (
     decided_by     uuid references app_user (id),  -- null for TIMED_OUT
     note           text,
     decided_at     timestamptz,
-    check ((status = 'PENDING') = (decided_at is null))
+    created_at     timestamptz not null default now(),
+    check ((status = 'PENDING') = (decided_at is null)),
+    check ((status in ('APPROVED', 'REJECTED')) = (decided_by is not null))  -- every officer decision names the officer
 );
 create unique index approval_one_pending_per_analysis on approval_request (analysis_id) where status = 'PENDING';
 create index approval_pending_expiry_idx on approval_request (expires_at) where status = 'PENDING';
+create index approval_created_idx on approval_request (created_at);
 
 create table audit_log (
     id          uuid primary key default gen_random_uuid(),
@@ -102,9 +114,11 @@ create table audit_log (
     at          timestamptz not null default now()
 );
 create index audit_log_analysis_idx on audit_log (analysis_id, at);
+create index audit_log_at_idx on audit_log (at);
 
 -- RabbitMQ delivers at least once: the events consumer records each event_id and ignores repeats.
 create table processed_event (
     event_id     uuid primary key,
     processed_at timestamptz not null default now()
 );
+create index processed_event_at_idx on processed_event (processed_at);  -- purged after 1 year with the rest

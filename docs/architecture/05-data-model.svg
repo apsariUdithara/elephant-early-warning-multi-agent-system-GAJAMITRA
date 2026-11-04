@@ -38,7 +38,7 @@
   <text class="tn" x="54" y="521">alert_delivery</text>
   <text class="k" x="54" y="548">id  UUID  PK</text>
   <text class="k" x="54" y="568">alert_id  FK → alert</text>
-  <text class="k" x="54" y="588">subscriber_id  FK → subscriber</text>
+  <text class="k" x="54" y="588">subscriber_id  FK, null once deleted</text>
   <text class="c" x="54" y="608">status, provider_id</text>
   <text class="k" x="54" y="628">UNIQUE (alert_id, subscriber_id)</text>
   <rect x="440" y="90" width="330" height="242" rx="8" class="tbl"/>
@@ -47,7 +47,7 @@
   <text class="tn" x="454" y="111">analysis</text>
   <text class="k" x="454" y="138">id  UUID  PK  (= Langfuse trace id)</text>
   <text class="k" x="454" y="158">site_id  FK → site</text>
-  <text class="c" x="454" y="178">video_path</text>
+  <text class="c" x="454" y="178">video_path  cleared after 30 days</text>
   <text class="c" x="454" y="198">boundary  6 × 0–1</text>
   <text class="c" x="454" y="218">status  QUEUED … COMPLETED | FAILED</text>
   <text class="c" x="454" y="238">risk  set by record_assessment</text>
