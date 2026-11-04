@@ -27,7 +27,11 @@ public final class AlertPolicy {
 	private final Table table;
 
 	public AlertPolicy() {
-		this.table = load();
+		this(AlertPolicy.class.getClassLoader().getResourceAsStream(TABLE));
+	}
+
+	AlertPolicy(InputStream table) {
+		this.table = load(table);
 	}
 
 	/** Whether an alert at {@code severity} may be sent at {@code stage} for an analysis whose stored risk is {@code risk}. */
@@ -39,14 +43,17 @@ public final class AlertPolicy {
 		if (rule == null) {
 			return Check.reject("unknown tracker risk '" + risk + "'");
 		}
-		if (!STAGES.contains(stage)) {
+		if (stage == null || !STAGES.contains(stage)) {
 			return Check.reject("unknown stage '" + stage + "'");
 		}
 		int level = rank(severity);
 		if (level < 0) {
 			return Check.reject("unknown severity '" + severity + "'");
 		}
-		if (rule.maxSeverity() == null || level > rank(rule.maxSeverity())) {
+		if (rule.maxSeverity() == null) {
+			return Check.reject("no village alert is allowed at " + risk + " risk");
+		}
+		if (level > rank(rule.maxSeverity())) {
 			return Check.reject(severity + " is above the maximum for " + risk + " risk");
 		}
 		String limit = stage.equals("NOW") ? rule.sendNowSeverity() : rule.escalationSeverity();
@@ -61,8 +68,8 @@ public final class AlertPolicy {
 		return table.severityOrder().indexOf(severity);
 	}
 
-	private static Table load() {
-		try (InputStream in = AlertPolicy.class.getClassLoader().getResourceAsStream(TABLE)) {
+	private static Table load(InputStream source) {
+		try (InputStream in = source) {
 			if (in == null) {
 				throw new IllegalStateException(TABLE + " is missing from the classpath");
 			}
@@ -79,7 +86,20 @@ public final class AlertPolicy {
 		if (table.severityOrder() == null || table.risk() == null || !table.risk().keySet().equals(RISKS)) {
 			throw new IllegalStateException(TABLE + " must define severity_order and every risk level " + RISKS);
 		}
+		List<String> order = table.severityOrder();
+		if (order.contains(null) || Set.copyOf(order).size() != order.size()) {
+			throw new IllegalStateException(TABLE + ": severity_order must list each level once");
+		}
 		table.risk().forEach((risk, rule) -> {
+			if (rule == null || rule.officerReport() == null || rule.holdEscalation() == null) {
+				throw new IllegalStateException(TABLE + ": " + risk + " must set officer_report and hold_escalation");
+			}
+			for (String level : new String[] { rule.maxSeverity(), rule.sendNowSeverity(), rule.escalationSeverity() }) {
+				// A typo such as "warnng" would otherwise reject every alert at that risk, losing the warning.
+				if (level != null && !order.contains(level)) {
+					throw new IllegalStateException(TABLE + ": " + risk + " uses unknown severity '" + level + "'");
+				}
+			}
 			for (String level : new String[] { rule.sendNowSeverity(), rule.escalationSeverity() }) {
 				if (level != null && (rule.maxSeverity() == null
 						|| table.severityOrder().indexOf(level) > table.severityOrder().indexOf(rule.maxSeverity()))) {
@@ -106,8 +126,8 @@ public final class AlertPolicy {
 	record Rule(@JsonProperty("max_severity") String maxSeverity,
 			@JsonProperty("send_now_severity") String sendNowSeverity,
 			@JsonProperty("escalation_severity") String escalationSeverity,
-			@JsonProperty("officer_report") boolean officerReport,
-			@JsonProperty("hold_escalation") boolean holdEscalation) {
+			@JsonProperty("officer_report") Boolean officerReport,
+			@JsonProperty("hold_escalation") Boolean holdEscalation) {
 	}
 
 }

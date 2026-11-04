@@ -1,7 +1,12 @@
 package com.gajamitra.alert;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -9,6 +14,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The Java re-check against the shared policy/policy_table.json. The same table is asserted by
@@ -56,6 +62,41 @@ class AlertPolicyTests {
 	void unknownStageOrSeverityIsRejected() {
 		assertThat(policy.check("high", "LATER", "warning").allowed()).isFalse();
 		assertThat(policy.check("high", "NOW", "emergency").allowed()).isFalse();
+		assertThat(policy.check("high", null, "warning").allowed()).isFalse();
+		assertThat(policy.check("high", "NOW", null).allowed()).isFalse();
+	}
+
+	private static final String GOOD_ROWS = """
+			"low": {"max_severity": null, "send_now_severity": null, "escalation_severity": null,
+			        "officer_report": false, "hold_escalation": false},
+			"medium": {"max_severity": "warning", "send_now_severity": "warning", "escalation_severity": null,
+			           "officer_report": false, "hold_escalation": false},
+			"critical": {"max_severity": "danger", "send_now_severity": "danger", "escalation_severity": null,
+			             "officer_report": true, "hold_escalation": false}""";
+
+	private static AlertPolicy fromJson(String highRow) {
+		String json = "{\"severity_order\": [\"advisory\", \"warning\", \"danger\"], \"risk\": {" + GOOD_ROWS
+				+ (highRow == null ? "" : ", \"high\": " + highRow) + "}}";
+		return new AlertPolicy(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+	}
+
+	@Test
+	void aValidTableLoads() {
+		assertThat(fromJson("""
+				{"max_severity": "danger", "send_now_severity": "warning", "escalation_severity": "danger",
+				 "officer_report": true, "hold_escalation": true}""").check("high", "NOW", "warning").allowed())
+				.isTrue();
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@CsvSource(delimiter = '|', value = {
+			"missing risk level | ",
+			"level above max    | {\"max_severity\": \"warning\", \"send_now_severity\": \"danger\", \"escalation_severity\": null, \"officer_report\": true, \"hold_escalation\": true}",
+			"misspelt level     | {\"max_severity\": \"danger\", \"send_now_severity\": \"warnng\", \"escalation_severity\": \"danger\", \"officer_report\": true, \"hold_escalation\": true}",
+			"missing flag       | {\"max_severity\": \"danger\", \"send_now_severity\": \"warning\", \"escalation_severity\": \"danger\", \"officer_report\": true}",
+	})
+	void anInconsistentTableStopsStartup(String why, String highRow) {
+		assertThatThrownBy(() -> fromJson(highRow)).isInstanceOf(IllegalStateException.class);
 	}
 
 	@Test
@@ -72,10 +113,10 @@ class AlertPolicyTests {
 
 	private static AlertPolicy.Table loadedTable() {
 		try (var in = AlertPolicy.class.getClassLoader().getResourceAsStream(AlertPolicy.TABLE)) {
-			return tools.jackson.databind.json.JsonMapper.builder().build().readValue(in, AlertPolicy.Table.class);
+			return JsonMapper.builder().build().readValue(in, AlertPolicy.Table.class);
 		}
-		catch (java.io.IOException e) {
-			throw new java.io.UncheckedIOException(e);
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 	}
 
