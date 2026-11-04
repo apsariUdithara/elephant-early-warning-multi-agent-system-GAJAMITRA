@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.4.0...v1.5.0) (2026-11-04)
+
+### Features
+
+* retry SMS deliveries left pending or failed without ever sending twice - GM-16 ([#16](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/16)) ([ce2eec8](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/ce2eec8dd0f00ba34bca8a074b6e242fc7a30b30))
+
 ## [1.4.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.3.0...v1.4.0) (2026-11-04)
 
 ### Features
