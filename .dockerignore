@@ -1,0 +1,14 @@
+# Keep secrets, local data and build output out of image build contexts.
+.env
+.env.*
+!.env.example
+.git
+.venv
+.vscode
+.claude
+data
+scratch
+**/__pycache__
+**/target
+**/node_modules
+frontend/dist

@@ -462,6 +462,16 @@ Built by Vite and served from Spring Boot `static/` in the production image (sam
    frontend `tsc` + build. Evals as a manual `workflow_dispatch` job (it spends API credits).
 4. Deployment: one cloud VM (e.g. AWS EC2/Lightsail) running compose behind HTTPS (Caddy). Documented in README.
 
+**Built in GM-24** (steps 1–2 without the frontend and Caddy): `backend/Dockerfile` (Maven build → JRE 21, non-root,
+built from the repo root so the shared policy table is included), `ai-service/Dockerfile` (python:3.11-slim,
+editable install so `policy.py` finds `/app/policy`, non-root, runs `python -m gajamitra.worker`),
+`.dockerignore` (keeps `.env`, data and build output out of images), and `docker-compose.yml` with `backend` and
+`worker` services: healthcheck-ordered start, a shared `videos` volume (read-only for the worker), all ports on
+127.0.0.1. The worker restarts until Spring has declared the queues.
+Smoke-tested with throwaway credentials: login → upload → `analysis.requests` → worker `started` → SAM fails without
+an API key → `failed` → analysis `FAILED`, all audited (no credits spent). Still to add: the frontend stage and Caddy
+(port 443 only, `/mcp` not routed).
+
 ---
 
 ## Phase 8: Hackathon submission
