@@ -257,6 +257,51 @@ input {
 .countdown { margin: 0 0 var(--space-3); font-weight: 700; font-variant-numeric: tabular-nums; }
 .confirm { font-weight: 700; }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+/* New analysis: the picture the boundary is picked on, shown at the clip's aspect ratio (GM-30). */
+.new-form { display: grid; gap: var(--space-4); max-width: 48rem; }
+.new-form h3 { margin: 0; }
+select {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.checkbox { display: flex; align-items: flex-start; gap: var(--space-3); font-weight: 600; }
+.checkbox input { flex: none; width: 24px; height: 24px; min-height: 0; margin-top: 2px; }
+.picker { position: relative; width: 100%; background: var(--dark-bg); overflow: hidden; border-radius: var(--radius); }
+.picker video { display: block; width: 100%; height: 100%; object-fit: fill; }
+.picker-overlay { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+.picker-line { stroke: var(--cloud-white); stroke-width: 3; stroke-dasharray: 8 6; }
+.marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--cloud-white);
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  pointer-events: none;
+}
+.typed-points { margin-top: var(--space-3); }
+.typed-points summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.typed-points fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.typed-points input { width: 8rem; }
+
 textarea {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
