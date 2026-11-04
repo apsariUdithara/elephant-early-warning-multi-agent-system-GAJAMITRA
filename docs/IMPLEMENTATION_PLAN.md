@@ -273,6 +273,12 @@ Events carry an `event_id`; the consumer ignores ones it has already stored, bec
 Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_village_alert`, `notify_wildlife_officer`.
 - Internal API key required (header, checked by a Spring Security filter on the MCP endpoint), not reachable from
   the public port in compose.
+- **Built in GM-17** (`mcp.GajamitraTools`, Spring AI 2.0.1, streamable HTTP at `/mcp`): the five tools above, with
+  the names and arguments of ai-service's `ToolClient`. The key is checked by `mcp.McpApiKeyFilter` (header
+  `X-Api-Key`, constant-time compare, every call refused when `MCP_API_KEY` is unset) until Spring Security is added.
+  Malformed arguments (bad UUID, unknown stage, invalid alert or report) are answered `rejected`, never thrown. An
+  unknown site's procedures default to `requires_approval: true`; history is bounded (90 days, 50 rows) and carries
+  no phones, video paths or alert text. The Python MCP client comes in Phase 4.
 - `send_village_alert(analysis_id, idempotency_key, stage, alert)` with `stage` `NOW | ESCALATION` and the key
   `{analysis_id}:{now|escalation}:{index}` (the officer report uses `{analysis_id}:now:report`). Reject a key that
   doesn't belong to that analysis and stage. Key already stored → return the stored result, send nothing.

@@ -25,6 +25,12 @@ public class Site {
 	private String name;
 
 	@Column(nullable = false)
+	private String villages;
+
+	@Column(name = "officer_contact", nullable = false)
+	private String officerContact;
+
+	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private Mode mode;
 
@@ -40,6 +46,14 @@ public class Site {
 
 	public String name() {
 		return name;
+	}
+
+	public String villages() {
+		return villages;
+	}
+
+	public String officerContact() {
+		return officerContact;
 	}
 
 	/** In SHADOW mode alerts are stored and logged but no SMS is sent. */
