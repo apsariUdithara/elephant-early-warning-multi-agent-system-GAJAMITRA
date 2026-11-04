@@ -8,11 +8,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
 
 /** A villager who receives SMS alerts for a site, in their own language. */
 @Entity
-@Immutable
 @Table(name = "subscriber")
 public class Subscriber {
 
@@ -32,6 +30,17 @@ public class Subscriber {
 	private Language language;
 
 	protected Subscriber() {
+	}
+
+	Subscriber(UUID siteId, String phone, Language language) {
+		this.id = UUID.randomUUID();
+		this.siteId = siteId;
+		this.phone = phone;
+		this.language = language;
+	}
+
+	public UUID siteId() {
+		return siteId;
 	}
 
 	public UUID id() {

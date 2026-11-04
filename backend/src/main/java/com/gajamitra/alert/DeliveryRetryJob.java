@@ -25,6 +25,9 @@ public class DeliveryRetryJob {
 	/** SENDING for this long means the process died mid-send or the status save failed. */
 	static final Duration STUCK_AFTER = Duration.ofMinutes(5);
 
+	/** Provider calls per delivery in all; a FAILED delivery with fewer is still due to be retried. */
+	public static final int MAX_ATTEMPTS = AlertDeliveryRepository.MAX_ATTEMPTS;
+
 	/** Deliveries handled per run, so one run stays short. */
 	static final int BATCH = 100;
 

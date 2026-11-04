@@ -9,4 +9,6 @@ public interface SubscriberRepository extends JpaRepository<Subscriber, UUID> {
 
 	List<Subscriber> findBySiteId(UUID siteId);
 
+	boolean existsBySiteIdAndPhone(UUID siteId, String phone);
+
 }
