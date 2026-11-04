@@ -36,6 +36,6 @@ You are editing code that decides whether villagers are warned. The 12 safety in
 
 Do not make these worse; fix them only as an assigned task.
 
-- **R1:** when `parse_sam` matches nothing, the prototype reports "No elephants detected" and risk `low`. A parsing failure must become an explicit failure state (invariant 1).
+- ~~**R1:** a SAM failure reads as "No elephants detected".~~ Fixed in GM-2: `parse_sam` raises `SamOutputError`, `segment_video` raises `PerceptionError` unless the stream completes, and the prototype API answers 502. Keep it that way: empty SAM output is the only "no elephants" case.
 - **R2:** an elephant that left the frame early is assessed from its last position; there is no "lost track" state.
 - **R3/R4:** `agent.run_agent` passes unvalidated LLM arguments to tools and parses the final JSON without a schema.
