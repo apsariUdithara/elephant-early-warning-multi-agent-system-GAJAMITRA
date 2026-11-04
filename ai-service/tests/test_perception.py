@@ -36,6 +36,12 @@ def fake_meta(monkeypatch, events=None, error=None):
     return client
 
 
+@pytest.fixture(autouse=True)
+def isolated_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(perception, "SAM_CACHE_DIR", tmp_path / "sam-cache")
+    return tmp_path / "sam-cache"
+
+
 @pytest.fixture
 def clip(tmp_path):
     path = tmp_path / "clip.mp4"
@@ -96,3 +102,28 @@ def test_app_reports_perception_failure_as_502_not_low_risk(monkeypatch, caplog)
     assert err.value.status_code == 502
     assert "elephants may be present" in err.value.detail
     assert any("perception failed for clip.mp4" in r.getMessage() and r.levelname == "ERROR" for r in caplog.records)
+
+
+def test_completed_result_is_cached_and_reused(monkeypatch, clip, isolated_cache):
+    fake_meta(monkeypatch, [("response.output_text.delta", BOXES), ("response.completed", None)])
+    first = segment_video(clip)
+    fake_meta(monkeypatch, error=AssertionError("SAM must not be called again for the same clip"))
+    assert segment_video(clip) == first
+    assert len(list(isolated_cache.glob("*.txt"))) == 1
+
+
+def test_failed_result_is_not_cached(monkeypatch, clip, isolated_cache):
+    fake_meta(monkeypatch, [("response.output_text.delta", BOXES), ("response.failed", None)])
+    with pytest.raises(PerceptionError):
+        segment_video(clip)
+    assert not isolated_cache.exists() or not list(isolated_cache.iterdir())
+
+
+def test_cache_key_depends_on_clip_and_prompt(monkeypatch, clip, tmp_path, isolated_cache):
+    fake_meta(monkeypatch, [("response.completed", None)])
+    other = tmp_path / "other.mp4"
+    other.write_bytes(b"a different clip")
+    segment_video(clip)
+    segment_video(other)
+    segment_video(clip, concept="calf")
+    assert len(list(isolated_cache.glob("*.txt"))) == 3
