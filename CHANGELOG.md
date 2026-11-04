@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.5.0...v1.6.0) (2026-11-04)
+
+### Features
+
+* expose the alert tools to the AI service as a key-protected MCP server - GM-17 ([#17](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/17)) ([77b37d1](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/77b37d107a1a361ef89c94973e898a9251f99668))
+
+## [1.5.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.4.0...v1.5.0) (2026-11-04)
+
+### Features
+
+* retry SMS deliveries left pending or failed without ever sending twice - GM-16 ([#16](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/16)) ([ce2eec8](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/ce2eec8dd0f00ba34bca8a074b6e242fc7a30b30))
+
 ## [1.4.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.3.0...v1.4.0) (2026-11-04)
 
 ### Features
