@@ -19,8 +19,8 @@ other's databases: jobs and events go through RabbitMQ, and the worker calls Spr
 ![Containers](architecture/02-containers.svg)
 
 ## 3. Agent pipeline
-One LangGraph run per analysis. The agents only *propose*. A deterministic guard caps their proposal to the
-tracker's evidence, and a human approves escalations.
+One LangGraph run per analysis. The agents only *propose*. A deterministic guard sets their proposal to the level the
+tracker's evidence allows (and fills in a template if they stay silent), and a human approves escalations.
 
 ![Agent pipeline](architecture/03-agent-graph.svg)
 

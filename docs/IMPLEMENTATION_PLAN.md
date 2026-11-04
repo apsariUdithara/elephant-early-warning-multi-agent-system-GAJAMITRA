@@ -144,24 +144,32 @@ site_context, assessment, proposal, verdict, revision_count, approval, executed_
 2. **load_context**: MCP `get_site_history(site_id, days=14)` (**episodic memory**: recent incidents, times,
    herd sizes) and `get_site_procedures(site_id)` (**procedural memory**: villages, landmarks, officer, approval rule).
 3. **responder** (Muse Spark, vision): input = keyframes + tracker summary + site context. Structured output
-   `Assessment {behaviour, calves, reasoning}` + `Proposal {actions: [VillageAlert{severity, en, si, ta} | OfficerReport{report}]}`.
+   `Assessment {behaviour, calves, reasoning}` + `Proposal {alerts: [VillageAlert{severity, en, si, ta}], officer_report: OfficerReport{report} | null}` (`schemas.py`, done in GM-3).
    It **proposes** but does not execute.
 4. **verifier** (Muse Spark, separate prompt, same evidence): `Verdict {decision: approve|revise|reject, reasons,
    suggested_severity}`. Checks: is it really an elephant, is it really approaching, does severity match evidence,
    do the alerts say where, how many and what to do, are all three languages present.
    `revise` → back to responder with the critique (max 2 rounds, then fall through with the verifier's severity).
-5. **policy_guard** (deterministic, `policy.py`; the main guardrail). Splits the proposal into `send_now` and
-   `escalation` (invariant 2). "Approval" = the site has `requires_approval` on; otherwise nothing is held.
+5. **policy_guard** (deterministic, `policy.py`, done in GM-3; the main guardrail). Splits the proposal into
+   `send_now` and `escalation` (invariant 2). "Approval" = the site has `requires_approval` on; otherwise nothing is
+   held and the escalation is sent right after the warning.
 
-   | Tracker risk | Max severity | `send_now` | `escalation` (held for approval) |
+   | Tracker risk | Max severity | `send_now` (exact level) | `escalation` (held for approval) |
    |---|---|---|---|
    | `low` | none | nothing (all alerts dropped) | – |
-   | `medium` | `warning` | alert, capped at `warning` | – |
-   | `high` | `danger` | alert at `warning` (same text) + officer report | the `danger` re-broadcast |
+   | `medium` | `warning` | alert at `warning` | – |
+   | `high` | `danger` | alert at `warning` (same text) + officer report | the `danger` re-broadcast, if the responder proposed `danger` |
    | `critical` | `danger` | alert at `danger` + officer report | – |
 
-   - officer report otherwise only on verifier-flagged aggression.
-   - every downgrade or hold is recorded with a reason (shown on the dashboard).
+   - The guard **raises or lowers** the proposed alert to the `send_now` level: the tracker's risk sets the floor
+     as well as the ceiling (decided with the user, GM-3).
+   - **Silent responder:** at `medium` or above with no proposed alert, the guard sends a fixed template alert in
+     English, Sinhala and Tamil (invariant 1). The Sinhala and Tamil templates need the native-speaker review in Phase 6.
+   - **Officer report** at `high`/`critical` or on verifier-flagged aggression; if the responder wrote none, the guard
+     sends a template report built from the tracker summary.
+   - Several proposed alerts: the most severe is kept, the rest dropped.
+   - An unknown risk value raises an error; the guard never guesses a level.
+   - Every raise, downgrade, template, drop or hold is recorded in `notes` (shown on the dashboard).
 6. **dispatch** (`send_now`): MCP `send_village_alert` / `notify_wildlife_officer`, idempotency key
    `{analysis_id}:now:{i}`.
 7. **approval_gate**: if `escalation` is non-empty → LangGraph `interrupt()`. The node does **nothing before
@@ -306,7 +314,7 @@ Built by Vite and served from Spring Boot `static/` in the production image (sam
 3. **LLM-as-judge** (DeepEval GEval, custom `DeepEvalBaseLLM` wrapper on the Meta API): alert quality (location,
    count, instruction, brevity). Judge = **Muse Wonder**, not Muse Spark: Spark writes and verifies the alerts, and a
    model grading its own output is biased toward it. Spot-check 5 judgements by hand and report agreement.
-4. Native-speaker check of Sinhala and Tamil alerts (manual, recorded in `evals/translation_review.md`).
+4. Native-speaker check of Sinhala and Tamil alerts, including the guard's template alerts in `policy.py` (manual, recorded in `evals/translation_review.md`).
 5. Results table generated into README.
 
 ---

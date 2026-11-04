@@ -116,7 +116,7 @@
   <text class="th" x="1070" y="537">escalation (held)</text>
   <line x1="690" y1="545" x2="1250" y2="545" stroke="#cbd2d9"/>
   <text class="s" x="696" y="563">low</text><text class="s" x="790" y="563">none</text><text class="s" x="870" y="563">nothing, alerts dropped</text><text class="s" x="1070" y="563">–</text>
-  <text class="s" x="696" y="581">medium</text><text class="s" x="790" y="581">warning</text><text class="s" x="870" y="581">alert capped at warning</text><text class="s" x="1070" y="581">–</text>
+  <text class="s" x="696" y="581">medium</text><text class="s" x="790" y="581">warning</text><text class="s" x="870" y="581">alert at warning</text><text class="s" x="1070" y="581">–</text>
   <text class="s" x="696" y="599">high</text><text class="s" x="790" y="599">danger</text><text class="s" x="870" y="599">warning + officer report</text><text class="s" x="1070" y="599">danger re-broadcast</text>
   <text class="s" x="696" y="617">critical</text><text class="s" x="790" y="617">danger</text><text class="s" x="870" y="617">danger + officer report</text><text class="s" x="1070" y="617">– (never held)</text>
 
