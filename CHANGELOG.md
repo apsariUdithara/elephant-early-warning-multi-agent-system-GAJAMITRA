@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.3.0...v1.4.0) (2026-11-04)
+
+### Features
+
+* add the alert dispatch core with idempotent alerts, the policy re-check and shadow mode - GM-14 ([#15](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/15)) ([6507ccc](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/6507ccc656e9c95b2420dca0590497642e474458))
+
 ## [1.3.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.2.0...v1.3.0) (2026-11-04)
 
 ### Features
