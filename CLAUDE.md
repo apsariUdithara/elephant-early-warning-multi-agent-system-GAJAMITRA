@@ -13,14 +13,14 @@ SAM 3.1 tracks elephants, Muse Spark agents propose alerts, a deterministic guar
 
 - Save everything inside this repo: plans, notes, scratch files, downloads, outputs. Nothing outside it. Plans go in `docs/`, temporary files in `scratch/` (git-ignored).
 - The user decides scope and timeline. Give technical trade-offs and a recommendation, and never argue against an option by citing deadlines.
-- Commit, push and open PRs only as part of a task the user assigned, following [Git, pull requests and releases](#git-pull-requests-and-releases). Never merge.
+- Commit, push feature branches and open PRs only when the user has explicitly assigned or authorized the task, following [Git, pull requests and releases](#git-pull-requests-and-releases). Never push to `main` and never merge: the user alone reviews and merges.
 - Don't add anything on the out-of-scope list (RAG, vector DBs, embeddings, fine-tuning, A2A, low-code builders, Kubernetes) unless the user asks for it.
 
 ## Current state vs target
 
 | Now | Target (plan Phases 1–7) |
 |---|---|
-| `ai-service/gajamitra/`: `track.py` (risk maths), `perception.py` (SAM 3.1), `agent.py` (prototype single agent), `app.py` + `index.html` (prototype FastAPI dashboard); `ai-service/tests/test_track.py` | `ai-service/` LangGraph worker (`graph.py`, `policy.py`, `worker.py`, `schemas.py`, `prompts.py`, `cli.py`, `evals/`) |
+| `ai-service/gajamitra/`: `track.py` (risk maths), `perception.py` (SAM 3.1), `policy.py` + `schemas.py` (guard), `graph.py` + `ports.py` + `prompts.py` + `cli.py` (LangGraph pipeline with stub tools), `agent.py` + `app.py` + `index.html` (prototype dashboard); `ai-service/tests/` | `ai-service/` LangGraph **worker** (`worker.py`, MCP client, Postgres checkpointer, `evals/`) |
 | `backend/`: Spring Boot 4.1 skeleton (web, actuator, validation) | `backend/` feature packages, Flyway, Security, AMQP, MCP server, Twilio |
 | `frontend/`: Vite + React + TypeScript placeholder | `frontend/` officer dashboard and villager views |
 | `policy/policy_table.json` (nothing reads it yet), `docker-compose.yml` (Postgres + RabbitMQ only) | Read by `policy.py` and the Java re-check; full compose stack |
@@ -161,7 +161,7 @@ These rules govern how changes are made to this repository.
 - **Dependencies require approval.** Do not add, upgrade or remove packages, libraries, services or build plugins without explaining the need and obtaining approval.
 - **Protect user work.** Inspect `git status` before editing. Do not overwrite uncommitted changes or discard user work.
 - **No unapproved destructive actions.** Do not delete data, reset databases, truncate tables, force-push, rewrite Git history, overwrite files or run destructive scripts without explicit approval.
-- **Git discipline.** Do not commit, push, create branches or open pull requests unless requested. Never amend or rewrite an existing commit unless explicitly requested.
+- **Git discipline.** Create branches, commit, push feature branches and open pull requests only for a task the user explicitly assigned or authorized. Never push to `main`, never merge or approve a PR (the user alone reviews and merges), and never amend or rewrite an existing commit unless explicitly requested.
 - **Verification honesty.** Run the relevant checks. Never say a test, build, migration or command passed unless it actually ran and passed. Clearly report failures, skipped checks and environmental limitations.
 - **Finish with a concise report.** State what changed, why, files affected, checks actually run and anything still requiring attention.
 

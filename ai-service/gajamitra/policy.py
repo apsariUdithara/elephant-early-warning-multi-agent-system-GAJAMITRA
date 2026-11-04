@@ -105,6 +105,12 @@ def guard(summary: Mapping, proposal: Proposal, *, requires_approval: bool, aggr
         send_now = [chosen.model_copy(update={"severity": level})]
         if rule.escalation_severity and chosen.severity == rule.escalation_severity:
             escalation = [chosen.model_copy(update={"severity": rule.escalation_severity})]
+        elif rule.escalation_severity and rule.hold_escalation and requires_approval:
+            # The tracker allows an escalation but no valid proposal asked for one: offer the officer a template
+            # instead of losing the escalation path (decided with the user, GM-8). Only where it will be held.
+            escalation = [template_alert(rule.escalation_severity, summary["herd_size"], place)]
+            notes.append(f"template {rule.escalation_severity} escalation held: no valid "
+                         f"{rule.escalation_severity} proposal")
 
     report = proposal.officer_report
     if rule.officer_report or aggression:

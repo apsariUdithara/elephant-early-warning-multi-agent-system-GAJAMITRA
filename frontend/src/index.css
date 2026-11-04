@@ -1,8 +1,164 @@
+/* GajaMitra design tokens: Clean Neutral & Signal Blue (.claude/rules/frontend.md).
+   Palette colours are declared once below; semantic tokens point at them; components use semantic tokens only.
+   Brand colours never mean risk; risk colours are used only for risk and always with a text label.
+   The theme is set on <html data-theme> by the inline script in index.html (before first paint) and by theme.ts. */
+
 :root {
-  font: 15px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: light dark;
+  /* Approved palette */
+  --midnight-slate: #1e293b; /* brand-900, dark-surface */
+  --cloud-white: #f8fafc;    /* surface-50, dark-text */
+  --slate: #475569;          /* slate-600 */
+  --signal-blue: #2563eb;    /* brand-600 */
+  --terracotta: #c06a45;     /* terracotta-600 */
+  --dark-bg: #0f172a;
+  --risk-low: #64748b;
+  --risk-medium: #d69e2e;
+  --risk-high: #e47735;
+  --risk-critical: #c83e45;
+  --status-safe: #0f766e;
+
+  /* Supporting neutrals, not yet in the approved palette table (awaiting approval, GM-9) */
+  --white: #ffffff;
+  --slate-200: #e2e8f0; /* light borders */
+  --slate-300: #cbd5e1; /* dark-theme secondary text */
+  --slate-700: #334155; /* dark-theme borders */
+  --blue-400: #60a5fa;  /* accent on dark surfaces: signal-blue is 2.9:1 there */
+  --blue-300: #93c5fd;  /* focus ring on dark surfaces */
+
+  /* Scales */
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  /* System fonts with Sinhala and Tamil coverage (Nirmala UI on Windows, Noto on Android/Linux). */
+  --font: system-ui, "Segoe UI", "Nirmala UI", "Noto Sans Sinhala", "Noto Sans Tamil", "Iskoola Pota", "Latha",
+    Roboto, sans-serif;
+
+  /* Semantic tokens: light theme (the default for officer dashboards) */
+  --bg: var(--cloud-white);
+  --surface: var(--white);
+  --text: var(--midnight-slate);
+  --text-muted: var(--slate);
+  --border: var(--slate-200);
+  --accent: var(--signal-blue);
+  --accent-text: var(--white);
+  --focus: var(--signal-blue);
+  --on-risk: var(--dark-bg);
+  --on-risk-strong: var(--white);
+  color-scheme: light;
+
+  font-family: var(--font);
+  font-size: 100%; /* respect the user's browser font size */
+  line-height: 1.5;
+}
+
+:root[data-theme="dark"] {
+  --bg: var(--dark-bg);
+  --surface: var(--midnight-slate);
+  --text: var(--cloud-white);
+  --text-muted: var(--slate-300);
+  --border: var(--slate-700);
+  --accent: var(--blue-400);
+  --accent-text: var(--dark-bg);
+  --focus: var(--blue-300);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.app-header {
+  --focus: var(--blue-300); /* the header is always dark: signal-blue would be 2.8:1 here */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--midnight-slate);
+  color: var(--cloud-white);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.app-main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.button {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid transparent; /* stays visible in Windows forced-colors mode */
+  border-radius: 999px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-badge[data-risk="low"] { background: var(--risk-low); color: var(--on-risk-strong); }
+.risk-badge[data-risk="medium"] { background: var(--risk-medium); color: var(--on-risk); }
+.risk-badge[data-risk="high"] { background: var(--risk-high); color: var(--on-risk); }
+.risk-badge[data-risk="critical"] { background: var(--risk-critical); color: var(--on-risk-strong); }
+
+.risk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
 }

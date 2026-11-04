@@ -35,7 +35,8 @@ def test_guard_table(risk, proposed, requires_approval):
     d = guard(summary(risk), proposal, requires_approval=requires_approval)
 
     assert [a.severity for a in d.send_now] == ([now] if now else [])
-    expected_escalation = [escalation] if escalation and proposed == escalation else []
+    # A held template escalation is offered at high risk even without a danger proposal (decided in GM-8).
+    expected_escalation = [escalation] if escalation and (proposed == escalation or requires_approval) else []
     assert [a.severity for a in d.escalation] == expected_escalation
     assert d.hold_for_approval == bool(expected_escalation and requires_approval)
     assert (d.officer_report is not None) == report
@@ -134,3 +135,15 @@ def test_policy_table_contract():
     }
     load_table.cache_clear()
     assert set(load_table().risk) == set(EXPECTED)
+
+
+def test_high_risk_offers_a_template_escalation_when_none_was_proposed():
+    d = guard(summary("high", herd=2), Proposal(alerts=[alert("warning")]), requires_approval=True)
+    (esc,) = d.escalation
+    assert esc.severity == "danger" and "2" in esc.en and d.hold_for_approval
+    assert any("template danger escalation held" in n for n in d.notes)
+
+
+def test_no_template_escalation_where_nobody_would_approve_it():
+    d = guard(summary("high"), Proposal(alerts=[alert("warning")]), requires_approval=False)
+    assert d.escalation == []

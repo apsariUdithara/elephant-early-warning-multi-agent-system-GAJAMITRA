@@ -1,75 +1,108 @@
-"""Prototype single agent: Muse Spark reads behaviour and calls tools. Replaced by the LangGraph graph in Phase 2."""
+"""Prototype responder: Muse Spark reads behaviour and *proposes* alerts; the policy guard decides what is sent.
+
+Replaced by the LangGraph responder/verifier graph in plan Phase 2. The model never sends anything itself:
+its JSON is validated against `schemas.ResponderOutput`, and `policy.guard` sets the levels (invariants 7, 8).
+"""
 import json
+import logging
 
 import cv2
+from openai import OpenAIError
+from pydantic import ValidationError
 
 from gajamitra.perception import keyframes, meta, segment_video
+from gajamitra.policy import guard
+from gajamitra.ports import ModelUnavailable
+from gajamitra.prompts import RESPONDER
+from gajamitra.schemas import Proposal, ResponderOutput
 from gajamitra.track import assess
 
 SPARK = "muse-spark-1.3"
+# One Muse Spark call: never longer than this, with at most one retry. A failure becomes ModelUnavailable.
+SPARK_TIMEOUT_S = 60.0
+SPARK_MAX_RETRIES = 1
+# The prototype has no officer approval screen yet (Spring Boot, plan Phase 3), so nothing is held: a high-risk
+# escalation is shown as sent right after the warning.
+PROTOTYPE_REQUIRES_APPROVAL = False
+# One retry with the validation error fed back; after that the guard's template alert is used.
+MAX_ATTEMPTS = 2
 
-SYSTEM = """You are GajaMitra, an early-warning agent protecting a Sri Lankan village and its elephants.
-You get keyframes from a boundary camera (SAM 3.1 boxes and IDs drawn on) and a tracker summary
-(herd size, each elephant's distance to the village boundary in pixels, whether it is near the boundary,
-approach speed, ETA in seconds).
-
-1. Judge herd behaviour from the frames: calm (feeding, slow wandering), alert (head up, ears forward,
-   standing still), warning (ears spread, trunk raised, head shaking), aggressive (mock charge, rapid advance),
-   or conflict-risk (moving purposefully toward crops or houses). Note calves; herds with calves are protective.
-2. Act in proportion, using the tools. Never escalate beyond what the evidence supports:
-   - low risk and calm: no action.
-   - medium risk (approaching, or close to the boundary): send_village_alert (advisory or warning).
-   - high or critical risk: send_village_alert (danger) and notify_wildlife_officer.
-   Alerts must be short and practical (where, how many, what to do) in English, Sinhala and Tamil.
-3. When finished, reply with only JSON:
-   {"behaviour": "<state>", "calves": true|false, "reasoning": "<two sentences citing what you saw>"}"""
-
-TOOLS = [
-    {"type": "function", "function": {
-        "name": "send_village_alert",
-        "description": "Broadcast an alert to registered villagers' phones.",
-        "parameters": {"type": "object", "properties": {
-            "severity": {"type": "string", "enum": ["advisory", "warning", "danger"]},
-            "english": {"type": "string"}, "sinhala": {"type": "string"}, "tamil": {"type": "string"}},
-            "required": ["severity", "english", "sinhala", "tamil"]}}},
-    {"type": "function", "function": {
-        "name": "notify_wildlife_officer",
-        "description": "Send an incident report to the Department of Wildlife Conservation duty officer.",
-        "parameters": {"type": "object", "properties": {"report": {"type": "string"}}, "required": ["report"]}}},
-]
+log = logging.getLogger("gajamitra.agent")
 
 
-def send_village_alert(**alert):
-    # ponytail: alerts only reach the dashboard; plug in an SMS/voice gateway for real villages.
-    return {"status": "delivered_to_dashboard"}
+def meta_chat(messages):
+    """ChatModel adapter for Muse Spark on the Meta Model API: messages -> reply text, or ModelUnavailable.
+    The only place that knows about the OpenAI SDK's errors."""
+    try:
+        client = meta().with_options(timeout=SPARK_TIMEOUT_S, max_retries=SPARK_MAX_RETRIES)
+        return client.chat.completions.create(model=SPARK, messages=messages).choices[0].message.content
+    except OpenAIError as e:
+        raise ModelUnavailable(f"{type(e).__name__}: {e}") from e
 
 
-def notify_wildlife_officer(report):
-    return {"status": "delivered_to_dashboard"}
+def parse_responder(text):
+    """Model text -> ResponderOutput. Accepts a ```json fence; anything else that doesn't fit is rejected."""
+    body = (text or "").strip()
+    if body.startswith("```"):
+        body = body.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    return ResponderOutput.model_validate_json(body)
 
 
-ACTIONS = {f.__name__: f for f in (send_village_alert, notify_wildlife_officer)}
+def propose(images, summary, chat=None, context=""):
+    """Ask the responder for an assessment and a proposal. Returns (ResponderOutput or None, notes).
 
-
-def run_agent(images, summary, max_steps=5):
-    events = []
-    messages = [{"role": "system", "content": SYSTEM},
-                {"role": "user", "content": [{"type": "text", "text": "Tracker summary:\n" + json.dumps(summary)}]
+    `chat` is the ChatModel port (default: Muse Spark). `context` adds site details, recent history or the
+    verifier's critique to the request.
+    """
+    chat = chat or meta_chat
+    request = "Tracker summary:\n" + json.dumps(summary) + (f"\n\n{context}" if context else "")
+    messages = [{"role": "system", "content": RESPONDER},
+                {"role": "user", "content": [{"type": "text", "text": request}]
                  + [{"type": "image_url", "image_url": {"url": u}} for u in images]}]
-    for _ in range(max_steps):
-        msg = meta().chat.completions.create(model=SPARK, messages=messages, tools=TOOLS).choices[0].message
-        if not msg.tool_calls:
-            try:
-                return events, json.loads(msg.content.strip().removeprefix("```json").strip("`"))
-            except (json.JSONDecodeError, AttributeError):
-                return events, {"reasoning": msg.content}
-        messages.append(msg.model_dump(exclude_none=True))
-        for call in msg.tool_calls:
-            args = json.loads(call.function.arguments or "{}")
-            result = ACTIONS[call.function.name](**args) if call.function.name in ACTIONS else {"error": "unknown tool"}
-            events.append({"tool": call.function.name, "args": args, "result": result})
-            messages.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(result)})
-    return events, {"reasoning": f"stopped after {max_steps} steps"}
+    notes = []
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            text = chat(messages)
+        except ModelUnavailable as e:
+            log.error("responder call failed: %s", e)
+            notes.append("responder call failed (model unavailable); the guard decides without a proposal")
+            return None, notes
+        try:
+            return parse_responder(text), notes
+        except ValidationError as e:
+            problem = e.errors()[0].get("msg", "invalid JSON")
+            log.warning("responder output rejected (attempt %d): %s", attempt, problem)
+            notes.append(f"responder output rejected (attempt {attempt}): {problem}")
+            messages += [{"role": "assistant", "content": text or ""},
+                         {"role": "user", "content": f"That reply was rejected: {problem}. Reply with only the JSON "
+                                                     "object described in the instructions."}]
+    notes.append("no valid proposal; the guard decides without one")
+    return None, notes
+
+
+def dispatch(decision):
+    """Prototype delivery: alerts and reports go to the dashboard only (SMS arrives with Spring Boot)."""
+    status = "simulated"
+    actions = [{"tool": "send_village_alert", "stage": "now", "args": a.model_dump(), "result": {"status": status}}
+               for a in decision.send_now]
+    if decision.officer_report:
+        actions.append({"tool": "notify_wildlife_officer", "stage": "now", "args": decision.officer_report.model_dump(),
+                        "result": {"status": status}})
+    held = "held_for_approval" if decision.hold_for_approval else status
+    actions += [{"tool": "send_village_alert", "stage": "escalation", "args": a.model_dump(), "result": {"status": held}}
+                for a in decision.escalation]
+    return actions
+
+
+def respond(images, summary):
+    """Responder proposal -> guard decision -> simulated dispatch."""
+    output, notes = propose(images, summary)
+    proposal = output.proposal if output else Proposal()
+    aggression = bool(output and output.assessment.behaviour == "aggressive")
+    decision = guard(summary, proposal, requires_approval=PROTOTYPE_REQUIRES_APPROVAL, aggression=aggression)
+    assessment = output.assessment.model_dump() if output else {"behaviour": "unknown", "calves": False,
+                                                                  "reasoning": "No valid responder assessment."}
+    return assessment, decision, notes + decision.notes
 
 
 def analyze(path, boundary_norm):
@@ -80,10 +113,10 @@ def analyze(path, boundary_norm):
     frames, size = segment_video(path)
     if not size:
         return {"fps": fps, "frames": {}, "summary": {"herd_size": 0, "risk": "low", "elephants": []},
-                "actions": [], "assessment": {"reasoning": "No elephants detected."}}
+                "actions": [], "notes": [], "assessment": {"reasoning": "No elephants detected."}}
     w, h = size
     boundary = [v * (w if i % 2 == 0 else h) for i, v in enumerate(boundary_norm)]
     summary = assess(frames, fps, boundary)
-    actions, assessment = run_agent(keyframes(path, frames), summary)
+    assessment, decision, notes = respond(keyframes(path, frames), summary)
     return {"fps": fps, "width": w, "height": h, "frames": frames, "summary": summary,
-            "actions": actions, "assessment": assessment}
+            "actions": dispatch(decision), "notes": notes, "assessment": assessment}
