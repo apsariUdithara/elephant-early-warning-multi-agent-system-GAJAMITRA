@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.2.0...v1.3.0) (2026-11-04)
+
+### Features
+
+* add the PostgreSQL schema as Flyway migration V1 with constraint tests - GM-10 ([#14](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/14)) ([01c5981](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/01c5981fbda577f2a76043c094148f69e27384da))
+
 ## [1.2.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.1.0...v1.2.0) (2026-11-04)
 
 ### Features
