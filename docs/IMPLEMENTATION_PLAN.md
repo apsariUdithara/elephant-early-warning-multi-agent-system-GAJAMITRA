@@ -293,9 +293,11 @@ Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_vil
   `PENDING → SENDING` (a conditional update, committed before the provider is called) and then `SENT` or `FAILED`
   (migration V2). Only the sender whose claim succeeded sends; a row left in `SENDING` means "maybe sent" and is never
   sent again (invariant 4). One failing delivery doesn't stop the others; failures are logged at ERROR with `analysisId`.
-- **Still to build** (GM-14 safety audit and review, **a safety risk until done**, invariant 10):
-  - a scheduled job that retries deliveries left `PENDING` (for example after a crash between commit and sending),
-    using the same claim, and alerts on rows stuck in `SENDING` for a person to check;
+- **Delivery retry (GM-16, `alert.DeliveryRetryJob`)**: every 30 s it retries deliveries left `PENDING` (crash
+  between commit and sending) or `FAILED` (provider refused) once they are 60 s old, with the same claim, up to 3
+  provider calls per delivery in all (`attempts`, migration V3). Rows in `SENDING` for over 5 minutes are never resent
+  ("maybe sent") and are logged at ERROR for a person to check.
+- **Still to build** (GM-14 review):
   - a timeout on every `SmsGateway.send` (with Twilio), and sending off the MCP request thread, so a slow provider
     can't hold up the agent;
   - the escalation hold reads `hold_escalation` from the policy table instead of relying on `escalation_severity`
