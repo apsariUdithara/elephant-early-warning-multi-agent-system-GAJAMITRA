@@ -285,6 +285,15 @@ Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_vil
   transaction, and deliver after commit: `SHADOW` site → log only; `LIVE` + flag on → Twilio to subscribers in
   their language, skipping deliveries already `SENT`; flag off → dashboard only.
 - `notify_wildlife_officer` uses the same idempotency-key rule.
+- **Built in GM-14** (`alert.AlertDispatchService`, `alert.AlertSender`): the logic behind `record_assessment`,
+  `send_village_alert` and `notify_wildlife_officer`, without the MCP transport (next slice). Calls for one analysis
+  are serialised by a row lock on `analysis`, so a repeated key finds the stored alert instead of racing to insert.
+  `record_assessment` stores the risk once; the same risk again is a no-op, a different one is refused.
+  SMS go out after commit through the `SmsGateway` port (`LoggingSmsGateway` until Twilio); each delivery is saved in
+  its own transaction, `FAILED` if the provider refuses it.
+- **Still to build** (found by the GM-14 safety audit, invariant 10): a scheduled job that retries deliveries left
+  `PENDING` (for example after a crash between commit and sending). It must claim each row with a conditional update
+  (`… where status = 'PENDING'`) before sending, so a retry can never text anyone twice.
 
 ### SMS
 `SmsGateway` with `TwilioSmsGateway` and `LoggingSmsGateway` (selected by `gajamitra.sms.enabled`).
