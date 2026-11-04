@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.13.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.12.0...v1.13.0) (2026-11-04)
+
+### Features
+
+* add the dashboard foundation with sign-in, the analyses list and three languages ([a61eb02](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/a61eb02b6cf5fa8a576d43b7e2671e0d20142100))
+* add the history, analysis detail and live update endpoints for the dashboard ([a34d1fb](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/a34d1fb334e0ad9dd29f8fad42677f00eaecaa57))
+
+### Bug Fixes
+
+* send the template wording when the guard changes an alert's level ([2f5ce8a](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/2f5ce8aa060d37f6b89121e110cf49926ce3a13a))
+
 ## [1.12.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.11.0...v1.12.0) (2026-11-04)
 
 ### Features
