@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.12.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.11.0...v1.12.0) (2026-11-04)
+
+### Features
+
+* let admins manage sites and villagers through the API ([58298e3](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/58298e3e504535308bdad7bbe35ffb5eed2a2b42))
+
+### Bug Fixes
+
+* start the worker after a healthy backend and keep passwords out of URLs ([43b7aed](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/43b7aed751ed700ad1ccf6039f0538a4a79755e3))
+
 ## [1.11.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.10.0...v1.11.0) (2026-11-04)
 
 ### Features
