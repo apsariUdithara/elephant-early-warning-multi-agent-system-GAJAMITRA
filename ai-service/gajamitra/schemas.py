@@ -29,6 +29,18 @@ class Proposal(Strict):
     officer_report: OfficerReport | None = None
 
 
+class Assessment(Strict):
+    behaviour: Literal["calm", "alert", "warning", "aggressive", "conflict-risk"]
+    calves: bool
+    reasoning: str = Field(min_length=1)
+
+
+class ResponderOutput(Strict):
+    """Everything the responder returns. Parsed from model text; anything that doesn't fit is rejected."""
+    assessment: Assessment
+    proposal: Proposal
+
+
 class GuardDecision(Strict):
     send_now: list[VillageAlert]
     officer_report: OfficerReport | None
