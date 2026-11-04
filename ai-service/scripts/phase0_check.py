@@ -41,9 +41,14 @@ class Report:
     def write(self):
         OUT.mkdir(parents=True, exist_ok=True)
         lines = ["| Check | Result | Detail |", "|---|---|---|"]
-        lines += [f"| {c} | {m} | {d.replace('|', '/')} |" for c, m, d in self.rows]
+        lines += [f"| {c} | {m} | {safe(d)} |" for c, m, d in self.rows]
         (OUT / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
         print(f"\nReport written to {OUT / 'report.md'}")
+
+
+def safe(detail):
+    """Model replies are untrusted: keep them as plain text in the markdown table."""
+    return detail.replace("|", "/").replace("\n", " ").replace("<", "&lt;").replace("`", "'")
 
 
 def text_of(response):
@@ -103,15 +108,22 @@ def check_sam(client, report, clip):
     started, chunks, events = time.time(), [], []
     with open(clip, "rb") as f:
         file = client.files.create(file=f, purpose="user_data")
-    with client.responses.stream(model="sam-3.1", input=[{"type": "message", "role": "user", "content": [
-            {"type": "input_text", "text": "elephant"}, {"type": "input_file", "file_id": file.id}]}]) as stream:
-        for event in stream:
-            events.append(event.type)
-            if event.type == "response.output_text.delta":
-                chunks.append(event.delta)
+    try:
+        with client.responses.stream(model="sam-3.1", input=[{"type": "message", "role": "user", "content": [
+                {"type": "input_text", "text": "elephant"}, {"type": "input_file", "file_id": file.id}]}]) as stream:
+            for event in stream:
+                events.append(event.type)
+                if event.type == "response.output_text.delta":
+                    chunks.append(event.delta)
+    finally:
+        # Keep whatever arrived (even from a broken stream) and don't leave footage in Meta's file store.
+        OUT.mkdir(parents=True, exist_ok=True)
+        (OUT / "sam_raw.txt").write_text("".join(chunks), encoding="utf-8")
+        try:
+            client.files.delete(file.id)
+        except OpenAIError as e:
+            report.add("SAM clip deleted from Meta", False, f"{type(e).__name__}: delete file {file.id} by hand")
     text = "".join(chunks)
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "sam_raw.txt").write_text(text, encoding="utf-8")
     kinds = sorted(set(events))
     report.add("SAM 3.1 stream events", "response.completed" in kinds,
                f"{len(events)} events, types {kinds} in {time.time() - started:.0f} s")
@@ -119,8 +131,9 @@ def check_sam(client, report, clip):
         frames, size = parse_sam(text)
         with_boxes = sum(1 for b in frames.values() if b)
         report.add("SAM 3.1 output parses", True, f"frame size {size}, {len(frames)} frames, {with_boxes} with boxes")
-        fps = cv2.VideoCapture(str(clip)).get(cv2.CAP_PROP_FPS) or 0
-        count = cv2.VideoCapture(str(clip)).get(cv2.CAP_PROP_FRAME_COUNT) or 0
+        cap = cv2.VideoCapture(str(clip))
+        fps, count = cap.get(cv2.CAP_PROP_FPS) or 0, cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
+        cap.release()
         report.add("SAM frame coverage", None, f"clip has {int(count)} frames at {fps:.1f} fps; SAM returned "
                                                f"{len(frames)} (every frame? {len(frames) == int(count)})")
     except SamOutputError as e:
@@ -141,7 +154,8 @@ def main():
     for check in checks:
         try:
             check(client, report)
-        except OpenAIError as e:
+        # A malformed reply (no choices, bad tool JSON) or a bad --clip path fails that check, not the whole run.
+        except (OpenAIError, ValueError, IndexError, AttributeError, OSError) as e:
             report.add(getattr(check, "__name__", "SAM 3.1"), False, f"{type(e).__name__}: {e}"[:200])
     report.write()
     return 0 if all(m != "FAIL" for _, m, _ in report.rows) else 1

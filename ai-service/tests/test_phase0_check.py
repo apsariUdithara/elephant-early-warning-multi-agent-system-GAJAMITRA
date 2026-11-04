@@ -57,9 +57,23 @@ def test_sam_check_saves_raw_output_and_reports_events(tmp_path, monkeypatch):
         def __exit__(self, *exc):
             return False
 
-    client = SimpleNamespace(files=SimpleNamespace(create=lambda **kw: SimpleNamespace(id="f")),
+    deleted = []
+    client = SimpleNamespace(files=SimpleNamespace(create=lambda **kw: SimpleNamespace(id="f"), delete=deleted.append),
                              responses=SimpleNamespace(stream=lambda **kw: Stream()))
     report = phase0.Report()
     phase0.check_sam(client, report, clip)
     assert (tmp_path / "sam_raw.txt").read_text() == "garbage"
     assert [r[1] for r in report.rows] == ["PASS", "FAIL"]  # stream completed; output didn't parse
+    assert deleted == ["f"]  # the clip doesn't stay in Meta's file store
+
+
+def test_a_malformed_reply_fails_one_check_not_the_run(tmp_path, monkeypatch):
+    monkeypatch.setattr(phase0, "OUT", tmp_path)
+    monkeypatch.setattr(phase0, "OpenAI", lambda **kw: SimpleNamespace(
+        models=SimpleNamespace(list=list),
+        chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kw: SimpleNamespace(choices=[])))))
+    monkeypatch.setenv("MODEL_API_KEY", "test")
+    monkeypatch.setattr("sys.argv", ["phase0_check.py"])
+    assert phase0.main() == 1
+    assert (tmp_path / "report.md").exists()  # every check ran and the report was still written
+
