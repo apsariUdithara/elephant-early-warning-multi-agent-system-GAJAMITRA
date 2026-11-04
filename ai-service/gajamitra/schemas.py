@@ -41,6 +41,13 @@ class ResponderOutput(Strict):
     proposal: Proposal
 
 
+class Verdict(Strict):
+    """The verifier's check of the responder's output. It can't change levels; only the guard sets them."""
+    decision: Literal["approve", "revise", "reject"]
+    reasons: list[str] = []
+    aggression: bool = False
+
+
 class GuardDecision(Strict):
     send_now: list[VillageAlert]
     officer_report: OfficerReport | None
