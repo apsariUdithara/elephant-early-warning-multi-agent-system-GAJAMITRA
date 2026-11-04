@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.json.JsonMapper;
 
 import com.gajamitra.auth.AppUserRepository;
+import com.gajamitra.evidence.EvidenceStore;
 
 /** The officer's approval queue (plan Phase 3, REST API). OFFICER or ADMIN. */
 @RestController
@@ -38,7 +39,7 @@ class ApprovalController {
 	 * wrong clock in the browser can't make the escalation look sent, or held, when it is not.
 	 */
 	record ApprovalView(UUID id, UUID analysisId, String status, Instant expiresAt, Object proposedAlerts,
-			Instant serverNow) {
+			Instant serverNow, int frames) {
 	}
 
 	record DecisionRequest(@NotNull ApprovalService.Decision decision, @Size(max = 500) String note) {
@@ -49,9 +50,11 @@ class ApprovalController {
 	private final AppUserRepository users;
 	private final JsonMapper json;
 	private final Clock clock;
+	private final EvidenceStore evidence;
 
 	ApprovalController(ApprovalService service, ApprovalRequestRepository approvals, AppUserRepository users,
-			JsonMapper json, Clock clock) {
+			JsonMapper json, Clock clock, EvidenceStore evidence) {
+		this.evidence = evidence;
 		this.json = json;
 		this.clock = clock;
 		this.service = service;
@@ -64,7 +67,8 @@ class ApprovalController {
 		Instant now = clock.instant();
 		return approvals.findByStatusOrderByExpiresAt("PENDING", Limit.of(100))
 			.stream()
-			.map(a -> new ApprovalView(a.id(), a.analysisId(), a.status(), a.expiresAt(), alerts(a), now))
+			.map(a -> new ApprovalView(a.id(), a.analysisId(), a.status(), a.expiresAt(), alerts(a), now,
+					evidence.count(a.analysisId())))
 			.toList();
 	}
 

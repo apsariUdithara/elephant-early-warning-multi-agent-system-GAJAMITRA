@@ -125,6 +125,7 @@ function parseApproval(value: unknown): ApprovalView {
       expiresAt: value.expiresAt,
       proposedAlerts: proposed,
       clockOffsetMs: Date.parse(value.serverNow) - Date.now(),
+      frames: typeof value.frames === 'number' && value.frames > 0 ? Math.min(Math.floor(value.frames), 99) : 0,
     }
   }
   throw new UnexpectedResponse('approval')

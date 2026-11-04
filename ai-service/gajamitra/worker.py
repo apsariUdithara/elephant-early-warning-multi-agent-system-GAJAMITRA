@@ -14,11 +14,13 @@ RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, POSTGRES_HOST, POSTGRES_PORT, POST
 POSTGRES_DB, MCP_URL, MCP_API_KEY, MODEL_API_KEY.
 """
 import asyncio
+import base64
 import json
 import logging
 import os
 import threading
 import uuid
+from pathlib import Path
 
 from gajamitra.graph import build_graph, config, resume, start
 
@@ -56,8 +58,9 @@ def outcome(state):
 class Worker:
     """The message handling, independent of RabbitMQ. publish(event: dict) sends one analysis.events message."""
 
-    def __init__(self, graph, publish):
+    def __init__(self, graph, publish, frames_dir=None):
         self.graph, self.publish = graph, publish
+        self.frames_dir = frames_dir  # where the frames the agents looked at are kept for the approval screen (or None)
         # ponytail: one lock per analysis, never removed (a few bytes each); prune finished ones if it ever matters.
         self._locks, self._locks_guard = {}, threading.Lock()
 
@@ -65,7 +68,23 @@ class Worker:
         self.publish({"schema_version": SCHEMA_VERSION, "event_id": str(uuid.uuid4()), "analysis_id": analysis_id,
                       "type": type_, **fields})
 
+    def _save_frames(self, analysis_id, state):
+        """Keep the keyframes the agents looked at, so an officer can see the evidence (plan Phase 5). Best effort: a
+        disk problem is logged and never delays the approval event, the warning or the run."""
+        if not self.frames_dir:
+            return
+        try:
+            folder = Path(self.frames_dir) / analysis_id  # analysis_id was checked to be a UUID: no path tricks
+            folder.mkdir(parents=True, exist_ok=True)
+            for i, url in enumerate(state.get("keyframes") or []):
+                head, _, data = url.partition(",")
+                if head == "data:image/jpeg;base64":
+                    (folder / f"{i}.jpg").write_bytes(base64.b64decode(data))
+        except (OSError, ValueError):
+            log.warning("could not save the evidence frames for analysis %s", analysis_id, exc_info=True)
+
     def _report(self, analysis_id, state):
+        self._save_frames(analysis_id, state)
         if "__interrupt__" in state:
             self._event(analysis_id, "approval_required", escalation=state["decision"]["escalation"])
         else:
@@ -179,7 +198,8 @@ def main():
                 asyncio.run_coroutine_threadsafe(
                     events_channel.default_exchange.publish(body, routing_key=EVENTS), loop).result(timeout=30)
 
-            worker = Worker(build_graph(McpToolClient(), meta_chat, checkpointer), publish)
+            worker = Worker(build_graph(McpToolClient(), meta_chat, checkpointer), publish,
+                            frames_dir=env.get("EVIDENCE_DIR", "/data/evidence"))
             # Separate channels, prefetch 1 each: a long analysis never blocks an officer's resume.
             for queue_name, handle in ((REQUESTS, worker.handle_request), (RESUME, worker.handle_resume)):
                 channel = await connection.channel()

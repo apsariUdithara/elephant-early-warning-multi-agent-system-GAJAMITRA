@@ -56,4 +56,6 @@ export interface ApprovalView {
   proposedAlerts: AlertText[] | null
   /** Server clock minus the browser clock when the list arrived: countdowns use server time (see ApprovalsPage). */
   clockOffsetMs: number
+  /** How many frames the agents looked at are stored: /api/analyses/{analysisId}/frames/0 to frames-1. */
+  frames: number
 }

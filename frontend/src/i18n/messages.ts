@@ -83,6 +83,8 @@ export const en = {
   'approvals.viewAnalysis': 'View the analysis',
   'approvals.unreadable': 'The proposed text could not be shown. Open the analysis.',
   'approvals.updated': 'Updated {time}',
+  'approvals.frames': 'Frames the agents looked at',
+  'approvals.frameAlt': 'Frame {n} of {total} from the clip',
 } as const
 
 export type MessageKey = keyof typeof en
@@ -170,6 +172,8 @@ export const si: Messages = {
   'approvals.viewAnalysis': 'විශ්ලේෂණය බලන්න',
   'approvals.unreadable': 'යෝජිත පෙළ පෙන්විය නොහැකි විය. විශ්ලේෂණය විවෘත කරන්න.',
   'approvals.updated': 'යාවත්කාලීන කළේ {time}',
+  'approvals.frames': 'නියෝජිතයන් බැලූ රාමු',
+  'approvals.frameAlt': 'ක්ලිපයේ රාමු {total} න් {n}',
 }
 
 export const ta: Messages = {
@@ -254,6 +258,8 @@ export const ta: Messages = {
   'approvals.viewAnalysis': 'பகுப்பாய்வைப் பார்',
   'approvals.unreadable': 'முன்மொழியப்பட்ட உரையைக் காட்ட முடியவில்லை. பகுப்பாய்வைத் திறக்கவும்.',
   'approvals.updated': 'புதுப்பிக்கப்பட்டது {time}',
+  'approvals.frames': 'முகவர்கள் பார்த்த பிரேம்கள்',
+  'approvals.frameAlt': 'கிளிப்பின் {total} பிரேம்களில் {n}',
 }
 
 export const dictionaries = { en, si, ta } as const

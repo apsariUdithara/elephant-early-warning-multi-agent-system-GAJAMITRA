@@ -112,3 +112,30 @@ def test_a_failed_publish_after_the_run_is_redelivered_never_reported_failed(): 
     w.handle_request(request())  # redelivery: the run is at the gate, so it reports that again
     assert types(events)[-1] == "approval_required"
     assert [d[1] for d in tools.deliveries] == ["warning", "officer"]
+
+
+def jpeg_worker(frames_dir):
+    import base64
+
+    url = "data:image/jpeg;base64," + base64.b64encode(b"\xff\xd8\xff\xe0fake-jpeg").decode()
+    tools = StubToolClient({"s1": {"name": "Galgamuwa", "requires_approval": True}})
+    graph = build_graph(tools, FakeChat([responder_reply("danger")], [verdict()]), InMemorySaver(),
+                        perceive=lambda path, boundary: (summary("high"), [url, "data:text/plain;base64,xx"]))
+    events = []
+    return Worker(graph, events.append, frames_dir=frames_dir), events
+
+
+def test_the_frames_the_agents_looked_at_are_kept_for_the_approval_screen(tmp_path):
+    w, events = jpeg_worker(tmp_path)
+    w.handle_request(request())
+    assert types(events)[-1] == "approval_required"
+    assert (tmp_path / AID / "0.jpg").read_bytes().startswith(b"\xff\xd8")
+    assert not (tmp_path / AID / "1.jpg").exists()  # only real JPEG data URLs are written
+
+
+def test_a_disk_problem_never_delays_the_approval_event(tmp_path):
+    blocker = tmp_path / "not-a-folder"
+    blocker.write_text("x")
+    w, events = jpeg_worker(blocker)  # frames_dir is a file: every write fails
+    w.handle_request(request())
+    assert types(events)[-1] == "approval_required"  # evidence is best effort; the escalation still waits for the officer

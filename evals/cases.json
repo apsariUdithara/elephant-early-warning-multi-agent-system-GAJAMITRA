@@ -1,0 +1,17 @@
+[
+  {"id": "hurulu-critical", "clip": "scratch/footage/hurulu_15s.mp4", "boundary": [0, 0.62, 1, 0.62, 0.5, 0.95], "expected_risk": "critical", "note": "provisional: observed result"},
+  {"id": "hurulu-high", "clip": "scratch/footage/hurulu_15s.mp4", "boundary": [0, 0.8, 1, 0.8, 0.5, 0.98], "expected_risk": "high", "note": "provisional: observed result"},
+  {"id": "approaching-herd-1", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "high"},
+  {"id": "approaching-herd-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "high"},
+  {"id": "approaching-herd-3", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "high"},
+  {"id": "calm-herd-1", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low"},
+  {"id": "calm-herd-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low"},
+  {"id": "calm-herd-3", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low"},
+  {"id": "at-boundary-1", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "critical"},
+  {"id": "at-boundary-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "critical"},
+  {"id": "flipped-village-side-1", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.1], "expected_risk": "low"},
+  {"id": "flipped-village-side-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.1], "expected_risk": "low"},
+  {"id": "no-elephants-1", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low"},
+  {"id": "no-elephants-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low"},
+  {"id": "tabletop-toy", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low", "note": "toy elephant must not alert"}
+]

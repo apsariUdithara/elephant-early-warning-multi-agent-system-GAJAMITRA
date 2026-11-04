@@ -89,6 +89,22 @@ function ApprovalCard({ approval, onDecided }: { approval: ApprovalView; onDecid
           </div>
         ))
       )}
+      {approval.frames > 0 && (
+        <>
+          <h3>{t('approvals.frames')}</h3>
+          <div className="frames">
+            {Array.from({ length: approval.frames }, (_, i) => (
+              <a key={i} href={`/api/analyses/${encodeURIComponent(approval.analysisId)}/frames/${i}`} target="_blank" rel="noreferrer">
+                <img
+                  loading="lazy"
+                  src={`/api/analyses/${encodeURIComponent(approval.analysisId)}/frames/${i}`}
+                  alt={t('approvals.frameAlt', { n: i + 1, total: approval.frames })}
+                />
+              </a>
+            ))}
+          </div>
+        </>
+      )}
       <p>
         <Link to={`/analyses/${encodeURIComponent(approval.analysisId)}`}>{t('approvals.viewAnalysis')}</Link>
       </p>

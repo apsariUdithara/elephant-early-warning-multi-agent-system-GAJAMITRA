@@ -34,6 +34,21 @@ describe('the approvals queue', () => {
     expect(screen.getByRole('link', { name: 'View the analysis' })).toHaveAttribute('href', '/analyses/a1')
   })
 
+  it('shows the frames the agents looked at, as pictures with a text description', async () => {
+    fakeBackend({ ...signedIn, 'GET /api/approvals': () => reply(200, [approval({ frames: 2 })]) })
+    renderApp('/approvals')
+    const first = await screen.findByAltText('Frame 1 of 2 from the clip')
+    expect(first).toHaveAttribute('src', '/api/analyses/a1/frames/0')
+    expect(screen.getByAltText('Frame 2 of 2 from the clip')).toHaveAttribute('src', '/api/analyses/a1/frames/1')
+  })
+
+  it('shows no picture section when there are no frames', async () => {
+    fakeBackend({ ...signedIn, 'GET /api/approvals': () => reply(200, [approval({ frames: 0 })]) })
+    renderApp('/approvals')
+    await screen.findByText(/DANGER: 8 elephants/)
+    expect(screen.queryByText('Frames the agents looked at')).not.toBeInTheDocument()
+  })
+
   it('says so when the time has run out: the escalation is being sent anyway', async () => {
     fakeBackend({ ...signedIn, 'GET /api/approvals': () => reply(200, [approval({ expiresAt: inSeconds(-5) })]) })
     renderApp('/approvals')
