@@ -32,7 +32,7 @@ def run_case(case, chat, perceive_graph=None):
     except Exception as e:  # noqa: BLE001  a failed run is a failed case, reported, never a pass
         return {"id": case["id"], "ok": False, "error": str(e), "risk": None, "sent": []}
     risk = state["summary"]["risk"]
-    sent = sorted({sev for _, sev in tools.deliveries})
+    sent = sorted({sev for _, sev in tools.deliveries if sev != "officer"})  # officer reports are not village alerts
     want = case["expected_risk"]
     return {"id": case["id"], "ok": risk == want and sent == expected_severities(want),
             "risk": risk, "expected_risk": want, "sent": sent}
@@ -48,7 +48,7 @@ def run_all(cases, chat):
 
 def report(summary):
     lines = [f"Passed {summary['passed']}/{summary['ran']} ({summary['total']} cases, {len(summary['skipped'])} without footage)"]
-    lines += [f"  {'ok  ' if r['ok'] else 'FAIL'} {r['id']}: risk {r['risk']}, sent {r['sent']}" for r in summary["results"]]
+    lines += [f"  {'ok  ' if r['ok'] else 'FAIL'} {r['id']}: risk {r['risk']}, sent {r['sent']}{' ' + r['error'][:150] if 'error' in r else ''}" for r in summary["results"]]
     lines += [f"  skip {i}: no clip yet" for i in summary["skipped"]]
     return "\n".join(lines)
 
