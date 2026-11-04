@@ -30,8 +30,10 @@ def fake_meta(monkeypatch, events=None, error=None):
         return FakeStream([SimpleNamespace(type=t, delta=d) for t, d in events])
 
     client = SimpleNamespace(files=SimpleNamespace(create=lambda **kw: SimpleNamespace(id="file-1")),
-                             responses=SimpleNamespace(stream=stream))
+                             responses=SimpleNamespace(stream=stream), options=[])
+    client.with_options = lambda **kw: client.options.append(kw) or client
     monkeypatch.setattr(perception, "meta", lambda: client)
+    return client
 
 
 @pytest.fixture
@@ -77,7 +79,13 @@ def test_api_error_is_a_perception_failure(monkeypatch, clip):
         segment_video(clip)
 
 
-def test_app_reports_perception_failure_as_502_not_low_risk(monkeypatch):
+def test_sam_calls_use_the_explicit_timeout(monkeypatch, clip):
+    client = fake_meta(monkeypatch, [("response.completed", None)])
+    segment_video(clip)
+    assert client.options == [{"timeout": perception.SAM_TIMEOUT_S}]
+
+
+def test_app_reports_perception_failure_as_502_not_low_risk(monkeypatch, caplog):
     def failing_analyze(path, boundary):
         raise PerceptionError("SAM 3.1 stream ended without completing (response.failed)")
 
@@ -87,3 +95,4 @@ def test_app_reports_perception_failure_as_502_not_low_risk(monkeypatch):
         web.analyze_video(video=upload, boundary="0,0.5,1,0.5,0.5,0.9")
     assert err.value.status_code == 502
     assert "elephants may be present" in err.value.detail
+    assert any("perception failed for clip.mp4" in r.getMessage() and r.levelname == "ERROR" for r in caplog.records)
