@@ -289,6 +289,8 @@ select {
   font-weight: 700;
   pointer-events: none;
 }
+.confirm-box { margin: var(--space-2) 0; padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); }
+.filter { max-width: 24rem; margin-bottom: var(--space-4); }
 .typed-points { margin-top: var(--space-3); }
 .typed-points summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
 .typed-points fieldset {
