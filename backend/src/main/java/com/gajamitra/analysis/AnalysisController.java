@@ -19,7 +19,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.http.MediaType;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
 import com.gajamitra.BadRequest;
+import com.gajamitra.alert.AlertQuery;
 import com.gajamitra.site.SiteRepository;
 
 /** Upload a clip for analysis and read its state (plan Phase 3, REST API). OFFICER or ADMIN. */
@@ -27,21 +35,46 @@ import com.gajamitra.site.SiteRepository;
 @RequestMapping("/api/analyses")
 class AnalysisController {
 
-	/** What the dashboard sees of an analysis: no storage paths. */
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AnalysisController.class);
+
+	/** One line of the history list: no storage paths. */
 	record AnalysisView(UUID id, UUID siteId, String status, String risk, Instant createdAt) {
+
+		static AnalysisView of(Analysis a) {
+			return new AnalysisView(a.id(), a.siteId(), a.status().name(), a.risk(), a.createdAt());
+		}
+	}
+
+	/** Everything the live page shows: the run's outcome, what was sent and the officer report. */
+	record AnalysisDetail(UUID id, UUID siteId, String status, String risk, Instant createdAt, String failureReason,
+			Map<String, Object> result, List<AlertQuery.AlertView> alerts, String officerReport) {
 	}
 
 	private final AnalysisService service;
 	private final AnalysisRepository analyses;
 	private final SiteRepository sites;
 	private final VideoStorage storage;
+	private final AlertQuery alertQuery;
+	private final AnalysisEvents liveEvents;
+	private final JsonMapper json;
 
 	AnalysisController(AnalysisService service, AnalysisRepository analyses, SiteRepository sites,
-			VideoStorage storage) {
+			VideoStorage storage, AlertQuery alertQuery, AnalysisEvents liveEvents, JsonMapper json) {
+		this.json = json;
 		this.service = service;
 		this.analyses = analyses;
 		this.sites = sites;
 		this.storage = storage;
+		this.alertQuery = alertQuery;
+		this.liveEvents = liveEvents;
+	}
+
+	/** The latest 50 analyses, newest first: for one site, or across all sites. */
+	@GetMapping
+	List<AnalysisView> list(@RequestParam(value = "siteId", required = false) UUID siteId) {
+		var found = siteId == null ? analyses.findTop50ByOrderByCreatedAtDesc()
+				: analyses.findTop50BySiteIdOrderByCreatedAtDesc(siteId);
+		return found.stream().map(AnalysisView::of).toList();
 	}
 
 	/** 202 with the id: the analysis is QUEUED and the AI service is asked after commit. */
@@ -73,10 +106,42 @@ class AnalysisController {
 	}
 
 	@GetMapping("/{id}")
-	ResponseEntity<AnalysisView> get(@PathVariable UUID id) {
-		return analyses.findById(id)
-			.map(a -> ResponseEntity.ok(new AnalysisView(a.id(), a.siteId(), a.status().name(), a.risk(), a.createdAt())))
+	ResponseEntity<AnalysisDetail> get(@PathVariable UUID id) {
+		return analyses.findById(id).map(a -> ResponseEntity.ok(new AnalysisDetail(a.id(), a.siteId(),
+				a.status().name(), a.risk(), a.createdAt(), shortened(a.failureReason()), parse(a.id(), a.result()),
+				alertQuery.forAnalysis(a.id()), alertQuery.officerReport(a.id()).orElse(null))))
 			.orElse(ResponseEntity.notFound().build());
+	}
+
+	/**
+	 * Live updates (Server-Sent Events): an event on every change; the page re-reads the analysis each time. The
+	 * browser's EventSource reconnects by itself when the stream ends.
+	 */
+	@GetMapping(path = "/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	SseEmitter events(@PathVariable UUID id) {
+		if (!analyses.existsById(id)) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+		return liveEvents.subscribe(id);
+	}
+
+	/** Worker-supplied text: bounded, and shown by the dashboard as plain text only. */
+	private static String shortened(String text) {
+		return text == null || text.length() <= 500 ? text : text.substring(0, 500);
+	}
+
+	private Map<String, Object> parse(UUID analysisId, String resultJson) {
+		if (resultJson == null) {
+			return null;
+		}
+		try {
+			return json.readValue(resultJson, new TypeReference<Map<String, Object>>() { });
+		}
+		catch (JacksonException e) {
+			// One unreadable result must not hide the whole analysis, and must never read as "nothing found".
+			log.warn("stored result of analysis {} is not valid JSON", analysisId);
+			return Map.of("unparseable", true);
+		}
 	}
 
 }

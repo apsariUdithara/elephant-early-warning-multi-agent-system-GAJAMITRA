@@ -45,4 +45,8 @@ public class OfficerReport {
 		return id;
 	}
 
+	public String report() {
+		return report;
+	}
+
 }

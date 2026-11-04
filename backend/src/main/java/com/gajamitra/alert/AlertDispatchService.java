@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.gajamitra.analysis.Analysis;
+import com.gajamitra.analysis.AnalysisChanged;
 import com.gajamitra.analysis.AnalysisRepository;
 import com.gajamitra.approval.ApprovalRequestRepository;
 import com.gajamitra.audit.AuditEntry.Actor;
@@ -69,6 +70,7 @@ public class AlertDispatchService {
 					"risk is already " + found.get().risk() + " and can't be changed to " + risk, Map.of());
 		}
 		audit.record(analysisId, Actor.AGENT, "risk_recorded", Map.of("risk", risk));
+		events.publishEvent(new AnalysisChanged(analysisId, "risk"));
 		return ToolResult.recorded();
 	}
 
@@ -103,6 +105,7 @@ public class AlertDispatchService {
 		audit.record(analysisId, Actor.AGENT, "village_alert_accepted",
 				Map.of("key", key, "stage", stage.name(), "severity", alert.severity(), "shadow", site.shadow()));
 		events.publishEvent(new AlertSender.AlertStored(analysisId, alert.id()));
+		events.publishEvent(new AnalysisChanged(analysisId, "alert"));
 		return ToolResult.accepted();
 	}
 
@@ -125,6 +128,7 @@ public class AlertDispatchService {
 		}
 		reports.save(new OfficerReport(analysisId, key, report));
 		audit.record(analysisId, Actor.AGENT, "officer_report_stored", Map.of("key", key));
+		events.publishEvent(new AnalysisChanged(analysisId, "report"));
 		return ToolResult.accepted();
 	}
 

@@ -110,6 +110,14 @@ public class Analysis {
 		return createdAt;
 	}
 
+	public String result() {
+		return result;
+	}
+
+	public String failureReason() {
+		return failureReason;
+	}
+
 	/** The stored tracker risk, or null if record_assessment hasn't run yet. */
 	public String risk() {
 		return risk;

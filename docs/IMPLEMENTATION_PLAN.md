@@ -375,7 +375,14 @@ retries left; their deliveries stay, anonymised, and are never claimed again). E
 admin's name, phones masked. Known limit: a villager removed in the same instant a sender claims their delivery can
 still receive that one SMS. A site switched from `LIVE` to `SHADOW` still sends deliveries already created as
 `PENDING` (the mode is fixed per alert when it is accepted).
-Still to build: history, SSE; a per-user upload rate limit; clip duration is checked
+**Built in GM-26** (read side for the dashboard, OFFICER or ADMIN): `GET /api/analyses?siteId=` (latest 50, newest
+first, one site or all), `GET /api/analyses/{id}` now returns the outcome (`result`: risk, herd size, approval,
+dispatched keys, guard and verifier notes), `failureReason`, the alerts that were sent (all three languages, shadow
+flag, delivery counts per state, never phone numbers) and the officer report, and `GET /api/analyses/{id}/events`
+(Server-Sent Events). The stream sends an event with no data (just a `kind`) on every change of status, risk, alert,
+report or approval, only after the database commit; the page re-reads the analysis on each event, so it never acts on
+a partial copy. Closed streams are removed on completion, timeout or error.
+Still to build: keyframes for the approval screen; a per-user upload rate limit; clip duration is checked
 by the AI service, not on upload; audit entries for logins.
 
 ### Observability
