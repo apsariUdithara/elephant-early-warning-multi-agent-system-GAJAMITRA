@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.11.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.10.0...v1.11.0) (2026-11-04)
+
+### Features
+
+* add the AI service worker that runs the graph from the queues ([5beb1c7](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/5beb1c7628eec8f7573210f5c06af63f7bdfdd45))
+
 ## [1.10.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.9.0...v1.10.0) (2026-11-04)
 
 ### Features
