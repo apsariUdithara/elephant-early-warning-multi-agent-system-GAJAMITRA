@@ -99,7 +99,7 @@ Purpose: prove every external dependency works before building on it.
 3. **SAM output shape**: run `segment_video` on one clip, save the raw streamed text, confirm `parse_sam`
    handles it (frame markers, box fields, w/h). Check whether boxes come for every frame or sampled frames
    (the dashboard currently looks up `frames[now]` exactly).
-4. **LangChain compatibility**: `ChatOpenAI(base_url=<Meta API>, model=<Muse Spark>)` with (a) image input,
+4. **Model compatibility** (now `scripts/phase0_check.py`; LangChain dropped in GM-8): `ChatOpenAI(base_url=<Meta API>, model=<Muse Spark>)` with (a) image input,
    (b) tool calling, (c) `with_structured_output`. If structured output fails, fall back to `method="function_calling"`.
 5. **MCP interop spike**: a Spring AI MCP server (`spring-ai-starter-mcp-server-webmvc`) exposing one dummy tool,
    called from Python via `langchain-mcp-adapters` (`MultiServerMCPClient`, Streamable HTTP/SSE transport).
@@ -131,6 +131,17 @@ Exit: `pytest` passes (track tests), `python -m gajamitra.cli clip.mp4 --boundar
 ---
 
 ## Phase 2: Multi-agent pipeline (LangGraph, Python)
+
+> **Status (GM-8):** the graph exists (`graph.py`, `ports.py`, `prompts.py`, `cli.py`) with every node below, run
+> synchronously with an in-memory checkpointer and the `StubToolClient`; 19 graph tests. Decided while building it:
+> - **No LangChain model layer.** Models sit behind a `ChatModel` port (`messages -> text`, Muse Spark through the
+>   existing OpenAI-compatible client). Output is validated with the Pydantic models plus one retry, so
+>   `langchain-openai` and `with_structured_output` aren't needed (Phase 0 step 4 is covered by `scripts/phase0_check.py`).
+> - **Verdict** is `{decision, reasons, aggression}`. The verifier can't suggest a severity: only the guard sets levels.
+>   `reject` discards the responder's text, and the guard sends its template alert; an unreadable verifier reply
+>   counts as `approve` (the guard still applies).
+> - Still to do: Langfuse tracing, timeouts and retries on Muse Spark calls, usage accounting, async + `AsyncPostgresSaver`
+>   and the MCP client (Phase 4).
 ### State (`schemas.py`, Pydantic)
 `analysis_id, site_id, video_path, boundary, fps, frames, summary (from assess), keyframes,
 site_context, assessment, proposal, verdict, revision_count, approval, executed_actions, usage (tokens, latency)`
