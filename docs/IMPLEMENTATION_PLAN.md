@@ -440,6 +440,28 @@ Pages:
 
 Built by Vite and served from Spring Boot `static/` in the production image (same origin, no CORS).
 
+**Build order and decisions** (agreed with the user): GM-26 backend read API (history, detail, SSE) → **GM-27
+foundation** → GM-28 pages (new analysis with boundary picker, live analysis, approvals queue, history, admin) →
+evidence keyframes for the approval screen (the worker writes small JPEGs to the shared volume, Spring serves them to
+signed-in users, deleted with the footage after 30 days).
+- **Built in GM-27:** `react-router-dom` (routing), `vitest` + `@testing-library/react` + `user-event` + `jest-dom` +
+  `jsdom` (tests, run with `npm test`); no UI kit and no data-fetching library: `fetch` plus small hooks.
+  - `src/api/client.ts`: the one place that calls the backend (same origin; Vite proxies `/api` to `127.0.0.1:8080` in
+    development, so run that backend with `GAJAMITRA_SECURE_COOKIES=false`). It sends the session cookie and the
+    CSRF token (`XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header) on writes, and reports an expired session. `src/api/parse.ts`
+    checks every response at runtime (TypeScript types say nothing about what the network returned); an unexpected
+    shape is an error state, never half-trusted data.
+  - `GET /api/me` (backend) tells the page who is signed in. Pages shown or hidden by role are only convenience:
+    every endpoint still checks the role.
+  - Login page (401 wrong credentials, 429 locked, 0 server unreachable each get their own message; one attempt at
+    a time), a signed-in shell (header, navigation, language switch, theme toggle, sign out) and the analyses list
+    with deliberate loading, empty, error (with retry) and expired-session states.
+  - **English, Sinhala and Tamil from the start**: a typed dictionary (`i18n/messages.ts`; the three languages must
+    define the same keys or the build fails), saved choice then browser language, `<html lang>` kept in step, dates and
+    times formatted for Sri Lanka, language names in their own script. The Sinhala and Tamil wording is a first
+    draft: **a native speaker must review it before real use.**
+  - Model-written and worker-written text (alert text, failure reasons, notes) is always rendered as plain text.
+
 ---
 
 ## Phase 6: Evals and success metrics
