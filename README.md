@@ -18,20 +18,22 @@ SAM 3.1 (Meta Model API) ── "elephant" ──► per-frame boxes with IDs th
 track.py ── where each elephant touches the ground, velocity, distance to the village boundary, ETA, risk level
       │
       ▼
-Muse Spark 1.3 (vision + tool calling)
+Muse Spark 1.3 (vision, JSON output)
   • reads behaviour from keyframes: calm / alert / warning / aggressive / conflict-risk, calves
-  • acts in proportion:
-      send_village_alert      English, Sinhala and Tamil
-      notify_wildlife_officer incident report
+  • proposes alerts (English, Sinhala, Tamil) and an officer report; it sends nothing itself
       │
       ▼
-dashboard ── live boxes, trails, predicted paths, risk level, alerts, agent actions
+policy.py (deterministic guard) ── sets the alert level from the tracker risk, fills in a template if the
+                                   model is silent or invalid, adds the officer report, records every change
+      │
+      ▼
+dashboard ── live boxes, trails, predicted paths, risk level, what the guard decided and why
 ```
 
 | Meta model | What it does here |
 |---|---|
 | SAM 3.1 | Tracks each elephant across the clip from a text prompt. IDs stay the same, so no separate tracker is needed |
-| Muse Spark 1.3 | Classifies behaviour from video frames, plans the response through tool calls, and writes the alerts in three languages |
+| Muse Spark 1.3 | Classifies behaviour from video frames and proposes the response and the alerts in three languages; a deterministic guard decides what is sent |
 
 ## Architecture
 
