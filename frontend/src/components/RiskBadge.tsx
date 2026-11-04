@@ -1,5 +1,5 @@
 // Risk is always shown as text and colour together, never colour alone (WCAG 2.2, frontend rules).
-export type Risk = 'low' | 'medium' | 'high' | 'critical'
+import type { Risk } from '../api/types'
 
 const LABEL: Record<Risk, string> = {
   low: 'Low risk',

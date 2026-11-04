@@ -1,5 +1,6 @@
 // App shell. The pages (login, new analysis, live analysis, approvals, history, admin) arrive in plan Phase 5.
-import RiskBadge, { type Risk } from './components/RiskBadge'
+import type { Risk } from './api/types'
+import RiskBadge from './components/RiskBadge'
 import ThemeToggle from './components/ThemeToggle'
 
 const RISKS: Risk[] = ['low', 'medium', 'high', 'critical']

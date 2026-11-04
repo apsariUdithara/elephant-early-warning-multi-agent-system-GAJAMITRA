@@ -1,20 +1,13 @@
-import { useState } from 'react'
-import { currentTheme, saveTheme, type Theme } from '../theme'
+import { useSyncExternalStore } from 'react'
+import { getTheme, saveTheme, subscribe } from '../theme'
 
+// A toggle button: the visible label is the accessible name, aria-pressed announces the current state.
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(currentTheme)
-  const next: Theme = theme === 'dark' ? 'light' : 'dark'
+  const theme = useSyncExternalStore(subscribe, getTheme)
+  const dark = theme === 'dark'
   return (
-    <button
-      type="button"
-      className="button"
-      aria-label={`Switch to ${next} theme`}
-      onClick={() => {
-        saveTheme(next)
-        setTheme(next)
-      }}
-    >
-      {theme === 'dark' ? 'Light theme' : 'Dark theme'}
+    <button type="button" className="button" aria-pressed={dark} onClick={() => saveTheme(dark ? 'light' : 'dark')}>
+      Dark theme
     </button>
   )
 }

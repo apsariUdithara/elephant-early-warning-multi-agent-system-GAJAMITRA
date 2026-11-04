@@ -2,9 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { applyTheme, savedTheme } from './theme'
+import { initTheme } from './theme'
 
-applyTheme(savedTheme()) // before the first render, so a saved choice doesn't flash the other theme
+initTheme() // index.html already set the theme before paint; this keeps it in sync and follows the system
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
