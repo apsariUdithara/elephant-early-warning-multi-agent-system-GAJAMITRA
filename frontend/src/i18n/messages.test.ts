@@ -12,6 +12,8 @@ describe('translations', () => {
 
   it('are really in Sinhala and Tamil, never English left in place', () => {
     for (const key of Object.keys(en) as (keyof typeof en)[]) {
+      // A value that is only placeholders and punctuation (like '{name} · {mode}') has no words to translate.
+      if (en[key].replace(/\{\w+\}/g, '').replace(/[^\p{L}]/gu, '') === '') continue
       expect(si[key], key).toMatch(SINHALA)
       expect(ta[key], key).toMatch(TAMIL)
     }

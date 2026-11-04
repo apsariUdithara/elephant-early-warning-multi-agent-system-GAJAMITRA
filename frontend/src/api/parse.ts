@@ -11,6 +11,7 @@ import type {
   Me,
   Risk,
   Severity,
+  SiteView,
 } from './types'
 
 export class UnexpectedResponse extends Error {}
@@ -53,6 +54,22 @@ function parseAnalysis(value: unknown): AnalysisView {
 export function parseAnalysisList(value: unknown): AnalysisView[] {
   if (!Array.isArray(value)) throw new UnexpectedResponse('analyses')
   return value.map(parseAnalysis)
+}
+
+export function parseSites(value: unknown): SiteView[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('sites')
+  return value.map((v) => {
+    if (isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string' && (v.mode === 'SHADOW' || v.mode === 'LIVE')) {
+      return { id: v.id, name: v.name, mode: v.mode }
+    }
+    throw new UnexpectedResponse('site')
+  })
+}
+
+/** The answer to POST /api/analyses: the id of the queued analysis. */
+export function parseCreatedId(value: unknown): string {
+  if (isRecord(value) && typeof value.id === 'string' && value.id !== '') return value.id
+  throw new UnexpectedResponse('created analysis')
 }
 
 const SEVERITIES: readonly string[] = ['advisory', 'warning', 'danger']

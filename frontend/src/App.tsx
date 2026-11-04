@@ -6,6 +6,7 @@ import AnalysesPage from './pages/AnalysesPage'
 import AnalysisPage from './pages/AnalysisPage'
 import ApprovalsPage from './pages/ApprovalsPage'
 import Login from './pages/Login'
+import NewAnalysisPage from './pages/NewAnalysisPage'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
         <Route index element={<AnalysesPage />} />
+        <Route path="new" element={<NewAnalysisPage />} />
         <Route path="analyses/:id" element={<AnalysisPage />} />
         <Route path="approvals" element={<ApprovalsPage />} />
       </Route>

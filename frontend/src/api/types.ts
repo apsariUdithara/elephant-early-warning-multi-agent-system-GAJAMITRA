@@ -21,6 +21,13 @@ export interface AnalysisView {
   createdAt: string
 }
 
+/** One site in GET /api/sites (officers may read the list; changes and villagers stay with admins). */
+export interface SiteView {
+  id: string
+  name: string
+  mode: 'SHADOW' | 'LIVE'
+}
+
 export type Severity = 'advisory' | 'warning' | 'danger'
 export type DeliveryState = 'PENDING' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED_SHADOW'
 

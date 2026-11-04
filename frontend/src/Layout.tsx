@@ -33,6 +33,7 @@ export default function Layout() {
           <NavLink to="/" end>
             {t('nav.analyses')}
           </NavLink>
+          <NavLink to="/new">{t('nav.new')}</NavLink>
           <NavLink to="/approvals">{t('nav.approvals')}</NavLink>
         </nav>
         <div className="app-tools">

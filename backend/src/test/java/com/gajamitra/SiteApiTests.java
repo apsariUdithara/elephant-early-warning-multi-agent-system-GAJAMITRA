@@ -73,6 +73,24 @@ class SiteApiTests {
 	}
 
 	@Test
+	void anOfficerSeesOnlyIdNameAndModeOfASiteAndNothingElseAboutSites() throws Exception {
+		UUID site = createSite();
+		addVillager(site, phone());
+		String options = mvc.perform(get("/api/site-options").with(user("o").roles("OFFICER")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[?(@.id == '" + site + "')].name").value(org.hamcrest.Matchers.hasItem("Galgamuwa")))
+			.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+		assertThat(options).doesNotContain("officerContact").doesNotContain("villages").doesNotContain("DWC Galgamuwa");
+		mvc.perform(get("/api/site-options")).andExpect(status().isUnauthorized());
+		// The full site data, the villagers' phone numbers and every change stay with the admin.
+		mvc.perform(get("/api/sites").with(user("o").roles("OFFICER"))).andExpect(status().isForbidden());
+		mvc.perform(get("/api/sites/" + site + "/subscribers").with(user("o").roles("OFFICER")))
+			.andExpect(status().isForbidden());
+		mvc.perform(put("/api/sites/" + site + "/mode").with(user("o").roles("OFFICER")).with(csrf())
+			.contentType(MediaType.APPLICATION_JSON).content("{\"mode\": \"LIVE\"}")).andExpect(status().isForbidden());
+	}
+
+	@Test
 	void aNewSiteStartsInShadowModeAndGoingLiveIsAudited() throws Exception {
 		UUID site = createSite();
 		mvc.perform(asAdmin(put("/api/sites/" + site + "/mode")).content("{\"mode\": \"LIVE\"}"))
