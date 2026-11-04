@@ -19,7 +19,7 @@ class SamOutputError(ValueError):
 def parse_sam(text):
     """SAM 3.1 streamed text -> ({frame: {obj_id: (x1, y1, x2, y2)}}, (frame_w, frame_h)).
 
-    Empty text means SAM matched nothing (it sends no deltas then). Non-empty text without a single
+    Empty text ("") means SAM matched nothing (it sends no deltas then). Non-empty text without a single
     readable box raises SamOutputError, so an error message or a format change can't pass as "no elephants".
     """
     frames, size = {}, None
@@ -34,7 +34,7 @@ def parse_sam(text):
             except (KeyError, ValueError) as e:
                 raise SamOutputError(f"unreadable box for object {obj_id} in frame {parts[i]}: {fields[:80]!r}") from e
         frames[int(parts[i])] = boxes
-    if text.strip() and size is None:
+    if text and size is None:  # only truly empty output means "no matches"; whitespace is not a result
         raise SamOutputError(f"SAM output has no readable boxes: {text.strip()[:120]!r}")
     return frames, size
 

@@ -1,4 +1,5 @@
 """Prototype web app (dashboard + /analyze). Replaced by Spring Boot and React in Phases 3 and 5."""
+import logging
 import os
 import shutil
 import tempfile
@@ -11,6 +12,7 @@ from gajamitra.agent import analyze
 from gajamitra.perception import PerceptionError
 
 app = FastAPI(title="GajaMitra")
+log = logging.getLogger("gajamitra.app")
 
 
 @app.get("/")
@@ -32,6 +34,7 @@ def analyze_video(video: UploadFile = File(...), boundary: str = Form(...)):
         return analyze(tmp.name, b)
     except PerceptionError as e:
         # Never answer "no elephants" when the camera analysis failed (safety invariant 1).
+        log.error("perception failed for %s: %s", video.filename or "clip", e)
         raise HTTPException(502, f"Perception failed, so elephants may be present: treat the risk as unknown "
                                  f"and check the camera. ({e})") from e
     finally:

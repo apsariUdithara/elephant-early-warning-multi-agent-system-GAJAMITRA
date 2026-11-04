@@ -80,7 +80,7 @@ Reviewers can't edit, run commands, commit or push. Skills call them only for ar
 
 ## 5. Guard hook and permissions
 
-`.claude/hooks/guard.py` (Python standard library only) runs before every Bash, Read, Edit and Write call, and after every edit.
+`.claude/hooks/guard.py` (Python standard library only) runs before every Bash, PowerShell, Read, Edit and Write call, and after every edit. Bash and PowerShell commands get exactly the same checks.
 
 **Blocked** (exit 2, with the reason shown to Claude):
 - `gh pr merge`, `gh pr review --approve`, `gh release create/edit/delete`, `gh repo edit`, `gh api` writes to protection, rulesets, merges or collaborators
@@ -91,7 +91,9 @@ Reviewers can't edit, run commands, commit or push. Skills call them only for ar
 - `Co-authored-by` or "Generated with Claude Code" in a commit message or PR body (including `--body-file`)
 - `gh pr create/edit` titles that aren't `<type>: <message> - GM-<n>`
 - commits whose staged changes contain a Meta API key, Twilio SID or token, private key, GitHub token or `sk-` key
-- reading or editing `.env` / `.env.*` (`.env.example` is allowed); editing `CHANGELOG.md`; editing a committed Flyway migration
+- reading or editing `.env` / `.env.*` (`.env.example` is allowed), including through shell commands (`cat`, `type`, `Get-Content`, copies, redirects and wildcards such as `.en*`)
+- printing secret environment variables (`MODEL_API_KEY`, `MCP_API_KEY`, `TWILIO_*`, `LANGFUSE_*` and any name containing PASSWORD, SECRET, TOKEN, AUTH or PRIVATE_KEY) through `$VAR`, `${VAR}`, `$env:VAR`, `%VAR%`, `printenv`, `os.environ` / `getenv` / `process.env` / `GetEnvironmentVariable`; dumping the whole environment (`env`, `printenv`, `set`, `Get-ChildItem env:`, `os.environ`); and PowerShell `-EncodedCommand`, which can't be checked
+- editing `CHANGELOG.md`; editing a committed Flyway migration
 - for `test-engineer`: editing anything that isn't a test file
 
 **Asks you first** (permission prompt):
@@ -108,6 +110,7 @@ Reviewers can't edit, run commands, commit or push. Skills call them only for ar
 **Failure behaviour:** if the hook gets input it can't parse, it exits 1. Claude Code reports the error and continues (it doesn't block all work), and the deny rules still apply.
 
 **Limits, stated honestly:**
+- **Secret protection is not complete.** The hook reads the command line only. A script or program that opens `.env` or reads the environment internally (for example `python some_tool.py`) is not visible to it, and the regression test keeps that limit explicit. The real controls are: secrets only in `.env` (git-ignored) and CI secrets, the deny rule on reading `.env`, and code that never logs secrets.
 - The hook reads command text. It can't see through scripts, aliases or commands built at runtime (for example `sh deploy.sh` that pushes inside). Branch protection on GitHub is the second line.
 - **GitHub can't tell Claude from you:** Claude uses your Git and `gh` credentials. Without the `main` ruleset (section 8), only this hook stops a push to `main`.
 - Commit messages written to the editor (no `-m`, `-F` or heredoc) aren't checked locally; `pr-checks` catches them on the PR.
