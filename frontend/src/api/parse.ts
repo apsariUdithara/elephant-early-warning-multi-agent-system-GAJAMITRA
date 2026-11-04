@@ -11,7 +11,9 @@ import type {
   Me,
   Risk,
   Severity,
+  SiteFull,
   SiteView,
+  Subscriber,
 } from './types'
 
 export class UnexpectedResponse extends Error {}
@@ -63,6 +65,45 @@ export function parseSites(value: unknown): SiteView[] {
       return { id: v.id, name: v.name, mode: v.mode }
     }
     throw new UnexpectedResponse('site')
+  })
+}
+
+function parseSiteFull(v: unknown): SiteFull {
+  if (
+    isRecord(v) &&
+    typeof v.id === 'string' &&
+    typeof v.name === 'string' &&
+    (v.mode === 'SHADOW' || v.mode === 'LIVE') &&
+    typeof v.villages === 'string' &&
+    typeof v.officerContact === 'string' &&
+    typeof v.requiresApproval === 'boolean' &&
+    typeof v.approvalTimeoutS === 'number'
+  ) {
+    return {
+      id: v.id,
+      name: v.name,
+      mode: v.mode,
+      villages: v.villages,
+      officerContact: v.officerContact,
+      requiresApproval: v.requiresApproval,
+      approvalTimeoutS: v.approvalTimeoutS,
+    }
+  }
+  throw new UnexpectedResponse('site')
+}
+
+export function parseSitesFull(value: unknown): SiteFull[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('sites')
+  return value.map(parseSiteFull)
+}
+
+export function parseSubscribers(value: unknown): Subscriber[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('subscribers')
+  return value.map((v) => {
+    if (isRecord(v) && typeof v.id === 'string' && typeof v.phone === 'string' && (v.language === 'EN' || v.language === 'SI' || v.language === 'TA')) {
+      return { id: v.id, phone: v.phone, language: v.language }
+    }
+    throw new UnexpectedResponse('subscriber')
   })
 }
 

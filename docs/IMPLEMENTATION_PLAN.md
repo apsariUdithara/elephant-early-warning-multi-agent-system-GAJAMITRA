@@ -504,8 +504,17 @@ signed-in users, deleted with the footage after 30 days).
     (officer contact, villages, approval settings, villagers' phones) stays admin-only.
   - **Known gap:** a portrait phone video that carries a rotation tag is untested. The page uses the size the browser
     shows; whether SAM and OpenCV see the same orientation has to be checked with such a clip before relying on it.
-- Still to build: history per site and the admin pages (sites, villagers); evidence keyframes on the approval screen.
-  **Visual review in a browser and native-speaker review of the Sinhala and Tamil strings are still open.**
+- **Built in GM-31** (history per site and the admin pages):
+  - The analyses list has a **site filter** (shown when there is more than one site): that site's incident history.
+  - **Admin** (`/admin`, `/admin/sites/:id`; the link and pages only for an admin, which is a convenience: the server
+    checks the role on every endpoint and nothing admin-only is even requested for an officer): the site list with
+    mode, approval rule and time limit shown as text; create a site (starts in test mode); edit its settings
+    (the approval time limit is 30 to 1800 s, so an escalation can never be held for long); the **mode switch**, where
+    going LIVE says plainly that villagers will receive real SMS and asks first; and the villagers who receive SMS
+    (add with an international-format number, remove with a confirmation that says past SMS records stay without the
+    phone number). The server states why a change is not accepted and the page shows that reason.
+- Still to build: evidence keyframes on the approval screen; the hackathon submission pieces. **Visual review in a
+  browser and native-speaker review of the Sinhala and Tamil strings are still open.**
 
 ---
 
