@@ -353,6 +353,21 @@ Spring Security session login (same-origin SPA), BCrypt, roles: OFFICER (view, a
 CSRF stays on: `CookieCsrfTokenRepository.withHttpOnlyFalse()`, React sends the `X-XSRF-TOKEN` header on writes.
 The MCP endpoint is excluded from CSRF (machine client, API-key filter instead).
 Secrets only via environment variables. Upload size/type limits. CORS closed in prod.
+**Built in GM-21** (`auth.SecurityConfiguration`): form login at `POST /api/login` (204 / 401, no redirects),
+`POST /api/logout`; 401 for an unauthenticated API call; `/api/sites/**` ADMIN, the rest of `/api/**` OFFICER or
+ADMIN, anything else denied. `/mcp` is outside the login and CSRF and keeps its API-key filter. The first ADMIN is
+created from `GAJAMITRA_ADMIN_USERNAME` / `GAJAMITRA_ADMIN_PASSWORD` (12+ characters) only while there are no users.
+Endpoints built: `POST /api/analyses` (multipart `video`, `siteId`, `boundary` "6 numbers"; MP4 checked by its
+`ftyp` box, not the file name or MIME type; stored under a generated name in `GAJAMITRA_VIDEO_DIR`; 200 MB limit;
+202 `{id}`), `GET /api/analyses/{id}` (no storage path), `GET /api/approvals` (pending),
+`POST /api/approvals/{id}` `{decision: APPROVE|REJECT, note}` (204, or 409 if already decided or timed out).
+Errors are `ProblemDetail`; only messages written for the client are returned. CSRF uses Spring Security's SPA mode;
+session and XSRF cookies are Secure (unless `GAJAMITRA_SECURE_COOKIES=false` for plain-HTTP local runs) and
+SameSite=Lax, with a 30-minute idle timeout. Five wrong passwords lock a username for 15 minutes (in memory, one
+instance). A failed or rejected upload never leaves a file behind.
+Officers see and decide approvals for every site (one pilot site; per-site scoping when there are several).
+Still to build: sites and subscribers CRUD, history, SSE; a per-user upload rate limit; clip duration is checked
+by the AI service, not on upload; audit entries for logins.
 
 ### Observability
 Actuator health/metrics; structured JSON logs with `analysisId` in MDC; the same id is the Langfuse trace id.

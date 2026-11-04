@@ -17,6 +17,8 @@ public interface ApprovalRequestRepository extends JpaRepository<ApprovalRequest
 
 	boolean existsByAnalysisId(UUID analysisId);
 
+	List<ApprovalRequest> findByStatusOrderByExpiresAt(String status, Limit limit);
+
 	List<ApprovalRequest> findByStatusAndExpiresAtLessThanEqual(String status, Instant now, Limit limit);
 
 	/** The officer's decision; only while still PENDING and not yet expired (the timeout wins a tie). */
