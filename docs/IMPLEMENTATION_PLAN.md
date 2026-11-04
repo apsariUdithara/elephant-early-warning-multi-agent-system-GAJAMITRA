@@ -285,6 +285,21 @@ Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_vil
   transaction, and deliver after commit: `SHADOW` site → log only; `LIVE` + flag on → Twilio to subscribers in
   their language, skipping deliveries already `SENT`; flag off → dashboard only.
 - `notify_wildlife_officer` uses the same idempotency-key rule.
+- **Built in GM-14** (`alert.AlertDispatchService`, `alert.AlertSender`): the logic behind `record_assessment`,
+  `send_village_alert` and `notify_wildlife_officer`, without the MCP transport (next slice). Calls for one analysis
+  are serialised by a row lock on `analysis`, so a repeated key finds the stored alert instead of racing to insert.
+  `record_assessment` stores the risk once; the same risk again is a no-op, a different one is refused.
+  SMS go out after commit through the `SmsGateway` port (`LoggingSmsGateway` until Twilio). Each delivery moves
+  `PENDING → SENDING` (a conditional update, committed before the provider is called) and then `SENT` or `FAILED`
+  (migration V2). Only the sender whose claim succeeded sends; a row left in `SENDING` means "maybe sent" and is never
+  sent again (invariant 4). One failing delivery doesn't stop the others; failures are logged at ERROR with `analysisId`.
+- **Still to build** (GM-14 safety audit and review, **a safety risk until done**, invariant 10):
+  - a scheduled job that retries deliveries left `PENDING` (for example after a crash between commit and sending),
+    using the same claim, and alerts on rows stuck in `SENDING` for a person to check;
+  - a timeout on every `SmsGateway.send` (with Twilio), and sending off the MCP request thread, so a slow provider
+    can't hold up the agent;
+  - the escalation hold reads `hold_escalation` from the policy table instead of relying on `escalation_severity`
+    being null for `critical`.
 
 ### SMS
 `SmsGateway` with `TwilioSmsGateway` and `LoggingSmsGateway` (selected by `gajamitra.sms.enabled`).
