@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.9.0...v1.10.0) (2026-11-04)
+
+### Features
+
+* add login, uploads and officer approvals to the Spring API ([ff12802](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/ff12802efdbd0265ddd6cf559cafa63253aeaa4a))
+* connect Spring to the AI service queues with approvals, timeouts and recovery ([47a9546](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/47a9546ec95f91075307292dc81f355444a938fc))
+
 ## [1.9.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.8.0...v1.9.0) (2026-11-04)
 
 ### Features
