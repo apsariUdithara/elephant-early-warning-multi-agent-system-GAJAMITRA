@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 1335" width="1300" height="1335" role="img" aria-labelledby="t4">
+  <title id="t4">GajaMitra analysis sequence</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#3e4c59"/></marker>
+    <style>
+      text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}
+      .title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#52606d}
+      .h{font-size:14px;font-weight:600}.xs{font-size:11px;fill:#52606d}
+      .lbl{font-size:12px;fill:#1f2933;paint-order:stroke;stroke:#fff;stroke-width:4px}
+      .line{stroke:#3e4c59;stroke-width:1.5;fill:none}.reply{stroke-dasharray:6 4}
+      .life{stroke:#9aa5b1;stroke-width:1;stroke-dasharray:4 4}
+      .fe{fill:#eef2ff;stroke:#4f46e5;stroke-width:1.5}.sb{fill:#ecfdf3;stroke:#15803d;stroke-width:1.5}
+      .py{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5}.inf{fill:#fffbeb;stroke:#b45309;stroke-width:1.5}
+      .ext{fill:#f8fafc;stroke:#64748b;stroke-width:1.5;stroke-dasharray:6 4}
+      .note{fill:#fefce8;stroke:#ca8a04;stroke-width:1}
+      .frame{fill:none;stroke:#c2410c;stroke-width:1.5;stroke-dasharray:8 4}
+    </style>
+  </defs>
+  <rect width="1300" height="1335" fill="#ffffff"/>
+  <text class="title" x="40" y="44">GajaMitra · One analysis, end to end (high risk, site requires approval)</text>
+  <text class="sub" x="40" y="68">The warning goes out before anyone is asked. Only the escalation to danger waits for the officer, and a timeout sends it anyway.</text>
+  <rect class="fe" x="35" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="110" y="110" text-anchor="middle">Browser</text>
+  <text class="xs" x="110" y="127" text-anchor="middle">React dashboard</text>
+  <line class="life" x1="110" y1="138" x2="110" y2="1315"/>
+  <rect class="sb" x="265" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="340" y="110" text-anchor="middle">Spring Boot</text>
+  <text class="xs" x="340" y="127" text-anchor="middle">backend</text>
+  <line class="life" x1="340" y1="138" x2="340" y2="1315"/>
+  <rect class="inf" x="485" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="560" y="110" text-anchor="middle">RabbitMQ</text>
+  <text class="xs" x="560" y="127" text-anchor="middle">queues</text>
+  <line class="life" x1="560" y1="138" x2="560" y2="1315"/>
+  <rect class="py" x="705" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="780" y="110" text-anchor="middle">AI worker</text>
+  <text class="xs" x="780" y="127" text-anchor="middle">LangGraph</text>
+  <line class="life" x1="780" y1="138" x2="780" y2="1315"/>
+  <rect class="ext" x="925" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="1000" y="110" text-anchor="middle">Meta Model API</text>
+  <text class="xs" x="1000" y="127" text-anchor="middle">SAM 3.1 · Muse Spark</text>
+  <line class="life" x1="1000" y1="138" x2="1000" y2="1315"/>
+  <rect class="ext" x="1115" y="90" width="150" height="48" rx="8"/>
+  <text class="h" x="1190" y="110" text-anchor="middle">Twilio</text>
+  <text class="xs" x="1190" y="127" text-anchor="middle">SMS</text>
+  <line class="life" x1="1190" y1="138" x2="1190" y2="1315"/>
+  <rect class="frame" x="22" y="785" width="1256" height="366" rx="6"/>
+  <text class="lbl" x="32" y="801" style="fill:#c2410c;font-weight:600">human in the loop: escalation only</text>
+  <path class="line" d="M110,175 H336" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="168" text-anchor="middle">POST /api/analyses (MP4, boundary, siteId)</text>
+  <rect class="note" x="170" y="199" width="339" height="24" rx="4"/>
+  <text class="xs" x="340" y="215" text-anchor="middle" style="fill:#713f12">validate · store MP4 · insert analysis QUEUED</text>
+  <path class="line reply" d="M340,255 H114" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="248" text-anchor="middle">202 Accepted {id}</text>
+  <path class="line" d="M110,295 H336" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="288" text-anchor="middle">GET /api/analyses/{id}/events (SSE)</text>
+  <path class="line" d="M340,335 H556" marker-end="url(#a)"/>
+  <text class="lbl" x="450" y="328" text-anchor="middle">analysis.requests</text>
+  <path class="line" d="M560,375 H776" marker-end="url(#a)"/>
+  <text class="lbl" x="670" y="368" text-anchor="middle">deliver (prefetch 1)</text>
+  <path class="line" d="M780,415 H996" marker-end="url(#a)"/>
+  <text class="lbl" x="890" y="408" text-anchor="middle">SAM 3.1: clip + &quot;elephant&quot;</text>
+  <path class="line reply" d="M1000,455 H784" marker-end="url(#a)"/>
+  <text class="lbl" x="890" y="448" text-anchor="middle">boxes + stable IDs (stream)</text>
+  <rect class="note" x="677" y="479" width="206" height="24" rx="4"/>
+  <text class="xs" x="780" y="495" text-anchor="middle" style="fill:#713f12">track.assess → risk = high</text>
+  <path class="line" d="M780,535 H344" marker-end="url(#a)"/>
+  <text class="lbl" x="560" y="528" text-anchor="middle">MCP record_assessment(risk) — sync, before any LLM</text>
+  <path class="line" d="M780,575 H996" marker-end="url(#a)"/>
+  <text class="lbl" x="890" y="568" text-anchor="middle">responder: keyframes + summary</text>
+  <path class="line" d="M780,615 H996" marker-end="url(#a)"/>
+  <text class="lbl" x="890" y="608" text-anchor="middle">verifier: same evidence</text>
+  <rect class="note" x="632" y="639" width="297" height="24" rx="4"/>
+  <text class="xs" x="780" y="655" text-anchor="middle" style="fill:#713f12">policy_guard → warning now, danger held</text>
+  <path class="line" d="M780,695 H344" marker-end="url(#a)"/>
+  <text class="lbl" x="560" y="688" text-anchor="middle">MCP send_village_alert(warning, key …:now:0)</text>
+  <path class="line" d="M340,735 H1186" marker-end="url(#a)"/>
+  <text class="lbl" x="765" y="728" text-anchor="middle">SMS warning in EN / SI / TA (LIVE site)</text>
+  <rect class="note" x="607" y="759" width="346" height="24" rx="4"/>
+  <text class="xs" x="780" y="775" text-anchor="middle" style="fill:#713f12">interrupt() · checkpoint saved · message acked</text>
+  <path class="line" d="M780,815 H564" marker-end="url(#a)"/>
+  <text class="lbl" x="670" y="808" text-anchor="middle">event: approval_required</text>
+  <path class="line" d="M560,855 H344" marker-end="url(#a)"/>
+  <text class="lbl" x="450" y="848" text-anchor="middle">deliver event</text>
+  <path class="line" d="M340,895 H114" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="888" text-anchor="middle">SSE: approval card + countdown</text>
+  <path class="line" d="M110,935 H336" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="928" text-anchor="middle">POST /api/approvals/{id} approve</text>
+  <rect class="note" x="178" y="959" width="325" height="24" rx="4"/>
+  <text class="xs" x="340" y="975" text-anchor="middle" style="fill:#713f12">or the timeout job: same conditional update</text>
+  <path class="line" d="M340,1015 H556" marker-end="url(#a)"/>
+  <text class="lbl" x="450" y="1008" text-anchor="middle">analysis.resume {approve | timeout}</text>
+  <path class="line" d="M560,1055 H776" marker-end="url(#a)"/>
+  <text class="lbl" x="670" y="1048" text-anchor="middle">deliver</text>
+  <path class="line" d="M780,1095 H344" marker-end="url(#a)"/>
+  <text class="lbl" x="560" y="1088" text-anchor="middle">MCP send_village_alert(danger, key …:escalation:0)</text>
+  <path class="line" d="M340,1135 H1186" marker-end="url(#a)"/>
+  <text class="lbl" x="765" y="1128" text-anchor="middle">SMS danger in EN / SI / TA</text>
+  <path class="line" d="M780,1175 H564" marker-end="url(#a)"/>
+  <text class="lbl" x="670" y="1168" text-anchor="middle">event: completed</text>
+  <path class="line" d="M560,1215 H344" marker-end="url(#a)"/>
+  <text class="lbl" x="450" y="1208" text-anchor="middle">deliver event</text>
+  <path class="line" d="M340,1255 H114" marker-end="url(#a)"/>
+  <text class="lbl" x="225" y="1248" text-anchor="middle">SSE: completed</text>
+</svg>

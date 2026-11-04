@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 860" width="1210" height="860" role="img" aria-labelledby="t5">
+  <title id="t5">GajaMitra data model</title>
+  <defs>
+    <style>
+      text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}
+      .title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#52606d}
+      .tn{font-size:14px;font-weight:700;fill:#14532d}.c{font-size:12px;fill:#334e68}.k{font-size:12px;fill:#1f2933;font-weight:600}
+      .tbl{fill:#ffffff;stroke:#15803d;stroke-width:1.5}.hdr{fill:#dcfce7;stroke:#15803d;stroke-width:1.5}
+      .rel{stroke:#3e4c59;stroke-width:1.5;fill:none}.card{font-size:12px;font-weight:700;fill:#b45309}
+      .lg{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5;stroke-dasharray:6 4}.s{font-size:12px;fill:#52606d}
+    </style>
+  </defs>
+  <rect width="1210" height="860" fill="#ffffff"/>
+  <text class="title" x="40" y="44">GajaMitra · Data model (PostgreSQL)</text>
+  <text class="sub" x="40" y="68">Schema public, owned by Spring Boot through Flyway. UNIQUE keys make every alert, report and SMS happen at most once.</text>
+  <rect x="40" y="90" width="330" height="182" rx="8" class="tbl"/>
+  <path d="M40,122 H370" stroke="#15803d"/>
+  <rect x="40" y="90" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="54" y="111">site</text>
+  <text class="k" x="54" y="138">id  UUID  PK</text>
+  <text class="c" x="54" y="158">name</text>
+  <text class="c" x="54" y="178">villages</text>
+  <text class="c" x="54" y="198">officer_contact</text>
+  <text class="c" x="54" y="218">mode  SHADOW | LIVE</text>
+  <text class="c" x="54" y="238">requires_approval  bool</text>
+  <text class="c" x="54" y="258">approval_timeout_s  default 120</text>
+  <rect x="40" y="330" width="330" height="122" rx="8" class="tbl"/>
+  <path d="M40,362 H370" stroke="#15803d"/>
+  <rect x="40" y="330" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="54" y="351">subscriber</text>
+  <text class="k" x="54" y="378">id  UUID  PK</text>
+  <text class="k" x="54" y="398">site_id  FK → site</text>
+  <text class="c" x="54" y="418">phone</text>
+  <text class="c" x="54" y="438">language  EN | SI | TA</text>
+  <rect x="40" y="500" width="330" height="142" rx="8" class="tbl"/>
+  <path d="M40,532 H370" stroke="#15803d"/>
+  <rect x="40" y="500" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="54" y="521">alert_delivery</text>
+  <text class="k" x="54" y="548">id  UUID  PK</text>
+  <text class="k" x="54" y="568">alert_id  FK → alert</text>
+  <text class="k" x="54" y="588">subscriber_id  FK → subscriber</text>
+  <text class="c" x="54" y="608">status, provider_id</text>
+  <text class="k" x="54" y="628">UNIQUE (alert_id, subscriber_id)</text>
+  <rect x="440" y="90" width="330" height="242" rx="8" class="tbl"/>
+  <path d="M440,122 H770" stroke="#15803d"/>
+  <rect x="440" y="90" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="454" y="111">analysis</text>
+  <text class="k" x="454" y="138">id  UUID  PK  (= Langfuse trace id)</text>
+  <text class="k" x="454" y="158">site_id  FK → site</text>
+  <text class="c" x="454" y="178">video_path</text>
+  <text class="c" x="454" y="198">boundary  6 × 0–1</text>
+  <text class="c" x="454" y="218">status  QUEUED … COMPLETED | FAILED</text>
+  <text class="c" x="454" y="238">risk  set by record_assessment</text>
+  <text class="c" x="454" y="258">summary  JSONB</text>
+  <text class="c" x="454" y="278">result  JSONB</text>
+  <text class="c" x="454" y="298">timings, cost</text>
+  <text class="c" x="454" y="318">created_at</text>
+  <rect x="440" y="400" width="330" height="182" rx="8" class="tbl"/>
+  <path d="M440,432 H770" stroke="#15803d"/>
+  <rect x="440" y="400" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="454" y="421">alert</text>
+  <text class="k" x="454" y="448">id  UUID  PK</text>
+  <text class="k" x="454" y="468">analysis_id  FK → analysis</text>
+  <text class="k" x="454" y="488">idempotency_key  UNIQUE</text>
+  <text class="c" x="454" y="508">stage  NOW | ESCALATION</text>
+  <text class="c" x="454" y="528">severity  advisory | warning | danger</text>
+  <text class="c" x="454" y="548">text_en, text_si, text_ta</text>
+  <text class="c" x="454" y="568">shadow  bool</text>
+  <rect x="440" y="640" width="330" height="122" rx="8" class="tbl"/>
+  <path d="M440,672 H770" stroke="#15803d"/>
+  <rect x="440" y="640" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="454" y="661">officer_report</text>
+  <text class="k" x="454" y="688">id  UUID  PK</text>
+  <text class="k" x="454" y="708">analysis_id  FK → analysis</text>
+  <text class="k" x="454" y="728">idempotency_key  UNIQUE</text>
+  <text class="c" x="454" y="748">text</text>
+  <rect x="840" y="90" width="330" height="182" rx="8" class="tbl"/>
+  <path d="M840,122 H1170" stroke="#15803d"/>
+  <rect x="840" y="90" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="854" y="111">approval_request</text>
+  <text class="k" x="854" y="138">id  UUID  PK</text>
+  <text class="k" x="854" y="158">analysis_id  FK → analysis</text>
+  <text class="c" x="854" y="178">proposed_alert  JSONB</text>
+  <text class="c" x="854" y="198">status  PENDING | APPROVED | REJECTED | TIMED_OUT</text>
+  <text class="c" x="854" y="218">expires_at</text>
+  <text class="k" x="854" y="238">decided_by  FK → app_user</text>
+  <text class="c" x="854" y="258">note, decided_at</text>
+  <rect x="840" y="330" width="330" height="122" rx="8" class="tbl"/>
+  <path d="M840,362 H1170" stroke="#15803d"/>
+  <rect x="840" y="330" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="854" y="351">app_user</text>
+  <text class="k" x="854" y="378">id  UUID  PK</text>
+  <text class="k" x="854" y="398">username  UNIQUE</text>
+  <text class="c" x="854" y="418">password_hash  BCrypt</text>
+  <text class="c" x="854" y="438">role  ADMIN | OFFICER</text>
+  <rect x="840" y="500" width="330" height="162" rx="8" class="tbl"/>
+  <path d="M840,532 H1170" stroke="#15803d"/>
+  <rect x="840" y="500" width="330" height="32" rx="8" class="hdr"/>
+  <text class="tn" x="854" y="521">audit_log</text>
+  <text class="k" x="854" y="548">id  UUID  PK</text>
+  <text class="k" x="854" y="568">analysis_id  FK → analysis</text>
+  <text class="c" x="854" y="588">actor  AGENT | OFFICER | SYSTEM</text>
+  <text class="c" x="854" y="608">action</text>
+  <text class="c" x="854" y="628">payload  JSONB</text>
+  <text class="c" x="854" y="648">at  timestamptz</text>
+  <path class="rel" d="M370,160 H440"/>
+  <text class="card" x="376" y="154">1</text>
+  <text class="card" x="428" y="154">*</text>
+  <path class="rel" d="M205,272 V330"/>
+  <text class="card" x="211" y="288">1</text>
+  <text class="card" x="211" y="324">*</text>
+  <path class="rel" d="M205,452 V500"/>
+  <text class="card" x="211" y="468">1</text>
+  <text class="card" x="211" y="494">*</text>
+  <path class="rel" d="M605,332 V400"/>
+  <text class="card" x="611" y="350">1</text>
+  <text class="card" x="611" y="394">*</text>
+  <path class="rel" d="M440,560 H370"/>
+  <text class="card" x="430" y="554">1</text>
+  <text class="card" x="374" y="554">*</text>
+  <path class="rel" d="M770,160 H840"/>
+  <text class="card" x="776" y="154">1</text>
+  <text class="card" x="828" y="154">*</text>
+  <path class="rel" d="M770,270 H820 V580 H840"/>
+  <text class="card" x="776" y="264">1</text>
+  <text class="card" x="828" y="574">*</text>
+  <path class="rel" d="M770,300 H795 V700 H770"/>
+  <text class="card" x="776" y="294">1</text>
+  <text class="card" x="776" y="694">*</text>
+  <path class="rel" d="M1005,330 V272"/>
+  <text class="card" x="1011" y="326">1</text>
+  <text class="card" x="1011" y="288">*</text>
+  <rect class="lg" x="40" y="720" width="330" height="100" rx="8"/>
+  <text class="tn" x="54" y="745" style="fill:#1e3a8a">schema langgraph</text>
+  <text class="s" x="54" y="769">Checkpoint tables created by AsyncPostgresSaver.setup()</text>
+  <text class="s" x="54" y="789">Owned by the Python worker, never touched by Flyway</text>
+  <text class="s" x="54" y="809">thread_id = analysis.id</text>
+</svg>

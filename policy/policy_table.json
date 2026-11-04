@@ -1,0 +1,10 @@
+{
+  "_doc": "Single source of truth for the alert guardrail. Read by ai-service/gajamitra/policy.py and by the Spring Boot re-check. See docs/IMPLEMENTATION_PLAN.md, Phase 2 step 5.",
+  "severity_order": ["advisory", "warning", "danger"],
+  "risk": {
+    "low":      {"max_severity": null,      "officer_report": false, "send_now_cap": null,      "hold_escalation": false},
+    "medium":   {"max_severity": "warning", "officer_report": false, "send_now_cap": "warning", "hold_escalation": false},
+    "high":     {"max_severity": "danger",  "officer_report": true,  "send_now_cap": "warning", "hold_escalation": true},
+    "critical": {"max_severity": "danger",  "officer_report": true,  "send_now_cap": "danger",  "hold_escalation": false}
+  }
+}

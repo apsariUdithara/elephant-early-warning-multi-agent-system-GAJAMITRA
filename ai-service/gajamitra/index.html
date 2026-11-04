@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GajaMitra</title>
+<style>
+  :root { --bg:#0f1412; --panel:#18201c; --text:#e8efe9; --muted:#9bb0a3; --accent:#ffc83d; --line:#4cc38a;
+          --low:#4cc38a; --medium:#ffc83d; --high:#ff8a3d; --critical:#ff4d4d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:16px; border-bottom:1px solid #26302b; }
+  h1 { margin:0; font-size:20px; } header p { margin:4px 0 0; color:var(--muted); }
+  main { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:16px; padding:16px; }
+  @media (max-width:800px) { main { grid-template-columns:1fr; } }
+  .stage { position:relative; background:#000; border-radius:8px; overflow:hidden; }
+  video { display:block; width:100%; }
+  canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  canvas.picking { pointer-events:auto; cursor:crosshair; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
+  button, input[type=file] { font:inherit; color:var(--text); background:var(--panel); border:1px solid #33413a;
+           border-radius:6px; padding:8px 12px; }
+  button.primary { background:var(--accent); color:#1a1300; border-color:var(--accent); font-weight:600; }
+  button:disabled { opacity:.5; }
+  #hint { color:var(--muted); }
+  aside { background:var(--panel); border-radius:8px; padding:16px; }
+  .risk { display:inline-block; padding:4px 12px; border-radius:999px; font-weight:700; text-transform:uppercase; color:#111; }
+  .card { border-top:1px solid #26302b; padding:12px 0; }
+  .card h3 { margin:0 0 6px; font-size:14px; color:var(--muted); font-weight:600; }
+  .action { background:#111814; border-radius:6px; padding:8px 10px; margin:6px 0; }
+  .action b { color:var(--accent); }
+  .lang { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GajaMitra</h1>
+  <p>Elephant early warning: SAM 3.1 tracks the herd, Muse Spark reads behaviour and acts.</p>
+</header>
+<main>
+  <section>
+    <div class="stage"><video id="video" controls muted playsinline></video><canvas id="overlay"></canvas></div>
+    <div class="controls">
+      <input id="file" type="file" accept="video/mp4">
+      <button id="pick" disabled>Set village boundary</button>
+      <button id="go" class="primary" disabled>Analyze</button>
+      <span id="hint">Upload a boundary-camera clip.</span>
+    </div>
+  </section>
+  <aside id="panel"><p class="lang">Results appear here.</p></aside>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const video = $("video"), canvas = $("overlay"), ctx = canvas.getContext("2d");
+let file = null, clicks = [], result = null;
+const RISK = { low: "var(--low)", medium: "var(--medium)", high: "var(--high)", critical: "var(--critical)" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+$("file").onchange = e => {
+  file = e.target.files[0]; if (!file) return;
+  video.src = URL.createObjectURL(file); clicks = []; result = null;
+  $("pick").disabled = false; $("go").disabled = true; $("panel").innerHTML = '<p class="lang">Results appear here.</p>';
+  $("hint").textContent = "Set the village boundary.";
+};
+$("pick").onclick = () => {
+  clicks = []; video.pause(); canvas.classList.add("picking");
+  $("hint").textContent = "Click two points along the boundary, then one point on the village side.";
+};
+canvas.onclick = e => {
+  const r = canvas.getBoundingClientRect();
+  clicks.push([(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]);
+  if (clicks.length === 3) {
+    canvas.classList.remove("picking"); $("go").disabled = false;
+    $("hint").textContent = "Boundary set. Analyze when ready.";
+  }
+};
+$("go").onclick = async () => {
+  $("go").disabled = true; $("hint").textContent = "SAM 3.1 tracking, Muse Spark assessing…";
+  const body = new FormData(); body.append("video", file); body.append("boundary", clicks.flat().join(","));
+  try {
+    const res = await fetch("/analyze", { method: "POST", body });
+    if (!res.ok) throw new Error(await res.text());
+    result = await res.json(); render(); video.currentTime = 0; video.play();
+    $("hint").textContent = "Done.";
+  } catch (err) { $("hint").textContent = "Failed: " + err.message; }
+  $("go").disabled = false;
+};
+
+function render() {
+  const s = result.summary, a = result.assessment || {};
+  const elephants = s.elephants.map(e => `<div>#${e.id}: ${e.dist_px <= 0 ? "<b>inside village side</b>"
+    : e.eta_s != null ? `approaching, ETA <b>${e.eta_s}s</b>` : e.near ? "<b>close to the boundary</b>, not moving in"
+    : "not approaching"}</div>`).join("");
+  const actions = result.actions.map(x => {
+    const g = x.args;
+    if (x.tool === "send_village_alert") return `<div class="action"><b>Village alert (${esc(g.severity)})</b><div>${esc(g.english)}</div>
+      <div class="lang">සිංහල: ${esc(g.sinhala)}</div><div class="lang">தமிழ்: ${esc(g.tamil)}</div></div>`;
+    return `<div class="action"><b>Wildlife officer notified</b><div>${esc(g.report)}</div></div>`;
+  }).join("") || '<p class="lang">No action needed.</p>';
+  $("panel").innerHTML = `
+    <span class="risk" style="background:${RISK[s.risk]}">${esc(s.risk)} risk</span>
+    <div class="card"><h3>Herd</h3>${s.herd_size} elephant(s)${a.calves ? ", calves present" : ""}${elephants}</div>
+    <div class="card"><h3>Behaviour (Muse Spark)</h3><b>${esc(a.behaviour || "unknown")}</b><div>${esc(a.reasoning)}</div></div>
+    <div class="card"><h3>Agent actions</h3>${actions}</div>`;
+}
+
+function draw() {
+  requestAnimationFrame(draw);
+  const r = canvas.getBoundingClientRect();
+  if (canvas.width !== r.width || canvas.height !== r.height) { canvas.width = r.width; canvas.height = r.height; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  ctx.lineWidth = 3; ctx.strokeStyle = "#4cc38a"; ctx.fillStyle = "#4cc38a";
+  if (clicks.length >= 2) {
+    ctx.setLineDash([10, 6]); ctx.beginPath();
+    ctx.moveTo(clicks[0][0] * W, clicks[0][1] * H); ctx.lineTo(clicks[1][0] * W, clicks[1][1] * H); ctx.stroke(); ctx.setLineDash([]);
+  }
+  clicks.forEach(([x, y], i) => { ctx.beginPath(); ctx.arc(x * W, y * H, i === 2 ? 7 : 5, 0, 7); ctx.fill(); });
+  if (clicks[2]) { ctx.font = "13px system-ui"; ctx.fillText("village", clicks[2][0] * W + 10, clicks[2][1] * H + 4); }
+  if (!result || !result.width) return;
+  const sx = W / result.width, sy = H / result.height, now = Math.floor(video.currentTime * result.fps);
+  const trails = {};
+  for (const [f, boxes] of Object.entries(result.frames)) {
+    if (+f > now) continue;
+    for (const [id, b] of Object.entries(boxes)) (trails[id] ||= []).push([+f, (b[0] + b[2]) / 2 * sx, b[3] * sy]);
+  }
+  ctx.strokeStyle = "rgba(255,200,61,.6)"; ctx.lineWidth = 2;
+  for (const t of Object.values(trails)) {
+    t.sort((a, b) => a[0] - b[0]); ctx.beginPath(); t.forEach(([, x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+  }
+  const boxes = result.frames[now] || {};
+  ctx.strokeStyle = "#ffc83d"; ctx.fillStyle = "#ffc83d"; ctx.lineWidth = 3; ctx.font = "bold 15px system-ui";
+  for (const [id, b] of Object.entries(boxes)) {
+    ctx.strokeRect(b[0] * sx, b[1] * sy, (b[2] - b[0]) * sx, (b[3] - b[1]) * sy);
+    ctx.fillText("#" + id, b[0] * sx + 4, b[1] * sy - 6);
+    const e = result.summary.elephants.find(e => String(e.id) === id);
+    if (e && e.approaching) {  // predicted path: next 3 s at the end-of-clip velocity
+      const x = (b[0] + b[2]) / 2 * sx, y = b[3] * sy;
+      ctx.strokeStyle = "#ff4d4d"; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + e.vx * 3 * sx, y + e.vy * 3 * sy); ctx.stroke();
+      ctx.strokeStyle = "#ffc83d";
+    }
+  }
+}
+draw();
+</script>
+</body>
+</html>

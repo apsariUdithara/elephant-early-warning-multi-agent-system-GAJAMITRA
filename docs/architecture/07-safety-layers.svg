@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 560" width="1300" height="560" role="img" aria-labelledby="t7">
+  <title id="t7">GajaMitra safety layers</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#3e4c59"/></marker>
+    <style>
+      text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}
+      .title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#52606d}
+      .h{font-size:15px;font-weight:700}.w{font-size:12px;fill:#334e68;font-style:italic}.s{font-size:12px;fill:#1f2933}
+      .k{font-size:11px;font-weight:700;letter-spacing:.04em;fill:#52606d}.inv{font-size:11px;fill:#7c2d12;font-weight:600}
+      .line{stroke:#3e4c59;stroke-width:1.6;fill:none}
+      .det{fill:#f8fafc;stroke:#475569;stroke-width:1.5}.llm{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5}
+      .sb{fill:#ecfdf3;stroke:#15803d;stroke-width:1.5}.hitl{fill:#fff7ed;stroke:#c2410c;stroke-width:2}
+      .num{fill:#1f2933}.numt{font-size:13px;font-weight:700;fill:#fff}
+    </style>
+  </defs>
+  <rect width="1300" height="560" fill="#ffffff"/>
+  <text class="title" x="40" y="44">GajaMitra · Safety layers (defence in depth)</text>
+  <text class="sub" x="40" y="68">An agent's proposal passes six layers before it reaches a phone. Each layer can only lower, hold or deduplicate an alert, with one exception: a timeout sends.</text>
+
+  <!-- card 1 -->
+  <rect class="det" x="35" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="61" cy="126" r="14"/><text class="numt" x="61" y="131" text-anchor="middle">1</text>
+  <text class="h" x="83" y="131">Tracker floor</text>
+  <text class="w" x="51" y="160">track.assess · Python</text>
+  <text class="k" x="51" y="192">STOPS</text>
+  <text class="s" x="51" y="212">A herd standing at the</text>
+  <text class="s" x="51" y="230">fence being reported as</text>
+  <text class="s" x="51" y="248">"low" risk because it</text>
+  <text class="s" x="51" y="266">isn't moving</text>
+  <text class="k" x="51" y="300">HOW</text>
+  <text class="s" x="51" y="320">Within NEAR_BODIES body</text>
+  <text class="s" x="51" y="338">heights → at least medium</text>
+  <text class="inv" x="51" y="400">Invariant 1</text>
+
+  <!-- card 2 -->
+  <rect class="llm" x="243" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="269" cy="126" r="14"/><text class="numt" x="269" y="131" text-anchor="middle">2</text>
+  <text class="h" x="291" y="131">Verifier agent</text>
+  <text class="w" x="259" y="160">Muse Spark · own prompt</text>
+  <text class="k" x="259" y="192">STOPS</text>
+  <text class="s" x="259" y="212">Wrong animal, imagined</text>
+  <text class="s" x="259" y="230">approach, over-reaction,</text>
+  <text class="s" x="259" y="248">vague or missing-language</text>
+  <text class="s" x="259" y="266">alerts</text>
+  <text class="k" x="259" y="300">HOW</text>
+  <text class="s" x="259" y="320">Approve / revise / reject;</text>
+  <text class="s" x="259" y="338">up to 2 revision rounds</text>
+  <text class="inv" x="259" y="400">Reflexion pattern</text>
+
+  <!-- card 3 -->
+  <rect class="det" x="451" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="477" cy="126" r="14"/><text class="numt" x="477" y="131" text-anchor="middle">3</text>
+  <text class="h" x="499" y="131">Policy guard</text>
+  <text class="w" x="467" y="160">policy.py · deterministic</text>
+  <text class="k" x="467" y="192">STOPS</text>
+  <text class="s" x="467" y="212">Any severity above what</text>
+  <text class="s" x="467" y="230">the tracker's risk allows</text>
+  <text class="k" x="467" y="264">HOW</text>
+  <text class="s" x="467" y="284">Caps by policy_table.json;</text>
+  <text class="s" x="467" y="302">splits send_now from the</text>
+  <text class="s" x="467" y="320">held escalation; records</text>
+  <text class="s" x="467" y="338">every downgrade</text>
+  <text class="inv" x="467" y="400">Shared table with Java</text>
+
+  <!-- card 4 -->
+  <rect class="sb" x="659" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="685" cy="126" r="14"/><text class="numt" x="685" y="131" text-anchor="middle">4</text>
+  <text class="h" x="707" y="131">Spring re-check</text>
+  <text class="w" x="675" y="160">MCP tool · Java</text>
+  <text class="k" x="675" y="192">STOPS</text>
+  <text class="s" x="675" y="212">A buggy or bypassed</text>
+  <text class="s" x="675" y="230">Python guard; an alert</text>
+  <text class="s" x="675" y="248">with no stored risk</text>
+  <text class="k" x="675" y="282">HOW</text>
+  <text class="s" x="675" y="302">Same table, checked again</text>
+  <text class="s" x="675" y="320">server-side; no risk →</text>
+  <text class="s" x="675" y="338">reject (fails closed)</text>
+  <text class="inv" x="675" y="400">Invariant 3</text>
+
+  <!-- card 5 -->
+  <rect class="hitl" x="867" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="893" cy="126" r="14"/><text class="numt" x="893" y="131" text-anchor="middle">5</text>
+  <text class="h" x="915" y="131">Officer approval</text>
+  <text class="w" x="883" y="160">approval_gate · scheduler</text>
+  <text class="k" x="883" y="192">STOPS</text>
+  <text class="s" x="883" y="212">Unjustified "danger"</text>
+  <text class="s" x="883" y="230">broadcasts at high risk</text>
+  <text class="k" x="883" y="264">HOW</text>
+  <text class="s" x="883" y="284">Holds only the escalation;</text>
+  <text class="s" x="883" y="302">the warning is already out.</text>
+  <text class="s" x="883" y="320">Critical is never held.</text>
+  <text class="s" x="883" y="338">Timeout → sent anyway</text>
+  <text class="inv" x="883" y="400">Invariant 2</text>
+
+  <!-- card 6 -->
+  <rect class="sb" x="1075" y="100" width="190" height="320" rx="12"/>
+  <circle class="num" cx="1101" cy="126" r="14"/><text class="numt" x="1101" y="131" text-anchor="middle">6</text>
+  <text class="h" x="1123" y="131">Idempotency</text>
+  <text class="w" x="1091" y="160">UNIQUE keys · Postgres</text>
+  <text class="k" x="1091" y="192">STOPS</text>
+  <text class="s" x="1091" y="212">Duplicate SMS after a</text>
+  <text class="s" x="1091" y="230">crash or a redelivered</text>
+  <text class="s" x="1091" y="248">message</text>
+  <text class="k" x="1091" y="282">HOW</text>
+  <text class="s" x="1091" y="302">{analysis}:{stage}:{i} keys;</text>
+  <text class="s" x="1091" y="320">one delivery per (alert,</text>
+  <text class="s" x="1091" y="338">subscriber); resume from</text>
+  <text class="s" x="1091" y="356">checkpoint, not restart</text>
+  <text class="inv" x="1091" y="400">Invariants 4 and 5</text>
+
+  <!-- arrows -->
+  <path class="line" d="M225,260 H243" marker-end="url(#a)"/>
+  <path class="line" d="M433,260 H451" marker-end="url(#a)"/>
+  <path class="line" d="M641,260 H659" marker-end="url(#a)"/>
+  <path class="line" d="M849,260 H867" marker-end="url(#a)"/>
+  <path class="line" d="M1057,260 H1075" marker-end="url(#a)"/>
+
+  <rect x="35" y="450" width="1230" height="74" rx="10" fill="#f8fafc" stroke="#cbd2d9"/>
+  <text class="s" x="55" y="478">Why layers: the LLMs (2) are the only non-deterministic part. Layers 3 and 4 are plain code that cap them to the tracker's evidence.</text>
+  <text class="s" x="55" y="500">Layer 5 adds human judgement without ever delaying a warning, and layer 6 makes retries safe.</text>
+</svg>

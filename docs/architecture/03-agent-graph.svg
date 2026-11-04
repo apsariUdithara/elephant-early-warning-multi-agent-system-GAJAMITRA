@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 1120" width="1300" height="1120" role="img" aria-labelledby="t3">
+  <title id="t3">GajaMitra LangGraph agent pipeline</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#3e4c59"/></marker>
+    <style>
+      text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}
+      .title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#52606d}
+      .n{font-size:15px;font-weight:600}.t{font-size:13px}.s{font-size:12px;fill:#52606d}.xs{font-size:11px;fill:#52606d}
+      .lbl{font-size:11px;fill:#334e68;paint-order:stroke;stroke:#fff;stroke-width:4px}
+      .line{stroke:#3e4c59;stroke-width:1.6;fill:none}
+      .det{fill:#f8fafc;stroke:#475569;stroke-width:1.5}
+      .llm{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5}
+      .fx{fill:#ecfdf3;stroke:#15803d;stroke-width:1.5}
+      .hitl{fill:#fff7ed;stroke:#c2410c;stroke-width:2}
+      .note{fill:#ffffff;stroke:#cbd2d9;stroke-width:1}
+      .th{font-size:12px;font-weight:600}
+    </style>
+  </defs>
+  <rect width="1300" height="1120" fill="#ffffff"/>
+  <text class="title" x="40" y="44">GajaMitra · LangGraph agent pipeline</text>
+  <text class="sub" x="40" y="68">One graph run per analysis · thread id = analysis id · state checkpointed in Postgres · agents propose, code and people decide</text>
+
+  <!-- START -->
+  <circle cx="380" cy="105" r="13" fill="#1f2933"/>
+  <text class="s" x="402" y="110">START (analysis.requests)</text>
+  <path class="line" d="M380,118 V140" marker-end="url(#a)"/>
+
+  <!-- nodes -->
+  <rect class="det" x="230" y="140" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="167" text-anchor="middle">perceive</text>
+  <text class="xs" x="380" y="186" text-anchor="middle">SAM 3.1 + track.py (deterministic maths)</text>
+  <path class="line" d="M380,200 V240" marker-end="url(#a)"/>
+  <text class="lbl" x="390" y="224">elephants found</text>
+
+  <rect class="det" x="230" y="240" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="267" text-anchor="middle">load_context</text>
+  <text class="xs" x="380" y="286" text-anchor="middle">episodic + procedural memory</text>
+  <path class="line" d="M380,300 V340" marker-end="url(#a)"/>
+
+  <rect class="llm" x="230" y="340" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="367" text-anchor="middle">responder</text>
+  <text class="xs" x="380" y="386" text-anchor="middle">LLM agent · proposes, never executes</text>
+  <path class="line" d="M380,400 V440" marker-end="url(#a)"/>
+
+  <rect class="llm" x="230" y="440" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="467" text-anchor="middle">verifier</text>
+  <text class="xs" x="380" y="486" text-anchor="middle">LLM agent · Reflexion-style critique</text>
+  <path class="line" d="M230,470 H190 V370 H230" marker-end="url(#a)"/>
+  <text class="lbl" x="182" y="416" text-anchor="end">revise</text>
+  <text class="lbl" x="182" y="432" text-anchor="end">(≤ 2 rounds)</text>
+  <path class="line" d="M380,500 V540" marker-end="url(#a)"/>
+  <text class="lbl" x="390" y="524">approve · reject · after 2 revisions</text>
+
+  <rect class="det" x="230" y="540" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="567" text-anchor="middle">policy_guard</text>
+  <text class="xs" x="380" y="586" text-anchor="middle">deterministic · policy_table.json</text>
+  <path class="line" d="M380,600 V640" marker-end="url(#a)"/>
+
+  <rect class="fx" x="230" y="640" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="667" text-anchor="middle">dispatch (send_now)</text>
+  <text class="xs" x="380" y="686" text-anchor="middle">side effects through MCP</text>
+  <path class="line" d="M380,700 V740" marker-end="url(#a)"/>
+  <text class="lbl" x="390" y="724">escalation held</text>
+
+  <rect class="hitl" x="230" y="740" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="767" text-anchor="middle">approval_gate</text>
+  <text class="xs" x="380" y="786" text-anchor="middle">human in the loop · interrupt()</text>
+  <path class="line" d="M380,800 V860" marker-end="url(#a)"/>
+  <text class="lbl" x="390" y="834">approve · timeout</text>
+
+  <rect class="fx" x="230" y="860" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="887" text-anchor="middle">dispatch (escalation)</text>
+  <text class="xs" x="380" y="906" text-anchor="middle">side effects through MCP</text>
+  <path class="line" d="M380,920 V960" marker-end="url(#a)"/>
+
+  <rect class="det" x="230" y="960" width="300" height="60" rx="10"/>
+  <text class="n" x="380" y="987" text-anchor="middle">finish</text>
+  <text class="xs" x="380" y="1006" text-anchor="middle">publish completed event</text>
+  <path class="line" d="M380,1020 V1050" marker-end="url(#a)"/>
+  <circle cx="380" cy="1064" r="13" fill="#fff" stroke="#1f2933" stroke-width="2"/>
+  <circle cx="380" cy="1064" r="8" fill="#1f2933"/>
+  <text class="s" x="402" y="1069">END</text>
+
+  <!-- bus to finish -->
+  <path class="line" d="M530,170 H620"/>
+  <text class="lbl" x="575" y="162" text-anchor="middle">no elephants</text>
+  <path class="line" d="M530,670 H620"/>
+  <text class="lbl" x="575" y="662" text-anchor="middle">no escalation</text>
+  <path class="line" d="M530,770 H620"/>
+  <text class="lbl" x="575" y="762" text-anchor="middle">reject</text>
+  <path class="line" d="M620,170 V990 H530" marker-end="url(#a)"/>
+
+  <!-- annotations -->
+  <rect class="note" x="680" y="132" width="580" height="76" rx="8"/>
+  <text class="t" x="696" y="156">SAM 3.1 (Meta API) → parse_sam → assess → keyframes</text>
+  <text class="s" x="696" y="176">Risk low / medium / high / critical from distance, speed and ETA to the boundary</text>
+  <text class="s" x="696" y="195">MCP record_assessment(risk): synchronous, before any LLM runs</text>
+
+  <rect class="note" x="680" y="240" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="264">MCP get_site_history: recent incidents at this site (episodic memory)</text>
+  <text class="s" x="696" y="284">MCP get_site_procedures: villages, officer, approval rule (procedural memory)</text>
+
+  <rect class="note" x="680" y="340" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="364">Muse Spark 1.3 · keyframes with boxes + tracker summary + site context</text>
+  <text class="s" x="696" y="384">Structured output: Assessment {behaviour, calves, reasoning} + Proposal {alerts EN/SI/TA, report}</text>
+
+  <rect class="note" x="680" y="440" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="464">Muse Spark 1.3 · separate prompt · same evidence</text>
+  <text class="s" x="696" y="484">Verdict {approve | revise | reject, reasons, suggested_severity}</text>
+
+  <!-- policy table -->
+  <rect class="note" x="680" y="515" width="580" height="117" rx="8"/>
+  <text class="th" x="696" y="537">Tracker risk</text>
+  <text class="th" x="790" y="537">Max</text>
+  <text class="th" x="870" y="537">send_now</text>
+  <text class="th" x="1070" y="537">escalation (held)</text>
+  <line x1="690" y1="545" x2="1250" y2="545" stroke="#cbd2d9"/>
+  <text class="s" x="696" y="563">low</text><text class="s" x="790" y="563">none</text><text class="s" x="870" y="563">nothing, alerts dropped</text><text class="s" x="1070" y="563">–</text>
+  <text class="s" x="696" y="581">medium</text><text class="s" x="790" y="581">warning</text><text class="s" x="870" y="581">alert capped at warning</text><text class="s" x="1070" y="581">–</text>
+  <text class="s" x="696" y="599">high</text><text class="s" x="790" y="599">danger</text><text class="s" x="870" y="599">warning + officer report</text><text class="s" x="1070" y="599">danger re-broadcast</text>
+  <text class="s" x="696" y="617">critical</text><text class="s" x="790" y="617">danger</text><text class="s" x="870" y="617">danger + officer report</text><text class="s" x="1070" y="617">– (never held)</text>
+
+  <rect class="note" x="680" y="645" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="669">MCP send_village_alert / notify_wildlife_officer · key {analysis_id}:now:{i}</text>
+  <text class="s" x="696" y="689">Spring re-checks severity against the stored risk and stores the key (at most once)</text>
+
+  <rect class="note" x="680" y="740" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="764">interrupt(): nothing runs before it · checkpoint saved · message acked</text>
+  <text class="s" x="696" y="784">Resumed by analysis.resume {approve | reject | timeout}; Spring owns the timeout</text>
+
+  <rect class="note" x="680" y="860" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="884">Same dispatch node · key {analysis_id}:escalation:{i}</text>
+  <text class="s" x="696" y="904">Reached only at high risk, on a site with requires_approval on</text>
+
+  <rect class="note" x="680" y="960" width="580" height="60" rx="8"/>
+  <text class="s" x="696" y="984">analysis.events: completed (summary, verdict, guard notes, actions)</text>
+  <text class="s" x="696" y="1004">Usage per node: tokens and wall time → cost and latency metrics</text>
+
+  <!-- legend -->
+  <rect class="det" x="680" y="1056" width="18" height="14" rx="3"/><text class="s" x="706" y="1068">Deterministic code</text>
+  <rect class="llm" x="840" y="1056" width="18" height="14" rx="3"/><text class="s" x="866" y="1068">LLM agent</text>
+  <rect class="fx" x="960" y="1056" width="18" height="14" rx="3"/><text class="s" x="986" y="1068">Side effect (MCP)</text>
+  <rect class="hitl" x="1110" y="1056" width="18" height="14" rx="3"/><text class="s" x="1136" y="1068">Human in the loop</text>
+</svg>

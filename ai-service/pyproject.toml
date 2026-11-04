@@ -1,0 +1,35 @@
+[project]
+name = "gajamitra-ai"
+version = "0.1.0"
+description = "GajaMitra AI worker: SAM 3.1 perception and the LangGraph agents"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.60",
+    "opencv-python-headless>=4.10",
+    # prototype web app (gajamitra.app), retired once Spring Boot + React replace it
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["gajamitra"]
+
+[tool.setuptools.package-data]
+gajamitra = ["index.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.File", "fastapi.Form"]

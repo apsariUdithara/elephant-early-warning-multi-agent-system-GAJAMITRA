@@ -1,0 +1,18 @@
+# Python
+*.pyc
+__pycache__/
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Java build output (also covered by frontend/ and backend/ .gitignore)
+node_modules/
+target/
+
+# Secrets and local data
+.env
+data/
+
+# Temporary files
+scratch/
