@@ -1,7 +1,7 @@
 """GajaMitra Claude Code guard hook (stdlib only).
 
 Modes (first argument):
-  pre         PreToolUse for Bash / Read / Edit / Write: block or ask before risky actions.
+  pre         PreToolUse for Bash / PowerShell / Read / Edit / Write: block or ask before risky actions.
   post        PostToolUse for Edit / Write: remind Claude to audit safety-critical changes.
   tests-only  PreToolUse for the test-engineer agent: allow edits to test files only.
 
@@ -10,6 +10,7 @@ Blocking uses exit code 2 with the reason on stderr. "Ask" uses the PreToolUse J
 and continues, and the deny rules in .claude/settings.json remain as a backstop.
 Self-test: python .claude/hooks/test_guard.py
 """
+import fnmatch
 import json
 import os
 import re
@@ -19,6 +20,8 @@ from pathlib import PurePosixPath
 
 # Keep in sync with CLAUDE.md, commitlint.config.mjs, .releaserc.json and .github/workflows/pr-checks.yml.
 TYPES = "feat|fix|perf|refactor|docs|style|test|build|ci|chore|revert"
+# Shell tools whose commands are checked the same way (Git Bash and PowerShell on Windows).
+SHELL_TOOLS = ("Bash", "PowerShell")
 SUBJECT = re.compile(rf"^({TYPES})!?: \S")
 
 SECRETS = [
@@ -195,11 +198,54 @@ def check_bash(cmd, root):
     for pattern, why in destructive:
         if re.search(pattern, c):
             raise Ask(f"Destructive command: {why}. Run it only with the developer's explicit approval.")
-    rm = re.search(r"\brm\s+(-\w*r\w*|--recursive)\b(.*)", c)
-    if rm:
-        targets = [t for t in rm.group(2).split("&&")[0].split() if not t.startswith("-")]
+    rm = re.search(r"(?i)\b(?:rm|remove-item|ri|del|rmdir|rd)\b(.*?)(?:&&|;|\||$)", c)
+    if rm and re.search(r"(?i)(\s-\w*r\w*\b|--recursive\b|-recurse\b|/s\b)", rm.group(1)):
+        targets = [t for t in rm.group(1).split() if not t.startswith(("-", "/"))]
         if not targets or not all(rel(t.strip("'\""), root).startswith("scratch/") for t in targets):
             raise Ask("Recursive delete outside scratch/. Run it only with the developer's explicit approval.")
+
+
+# ---------------------------------------------------------------- secrets in shell commands
+# Command-pattern matching can't make secrets safe on its own: a script or program can still read a file or the
+# environment internally. These checks stop the direct ways a command would show a secret in the transcript.
+
+SECRET_VAR = r"(?:MODEL_API_KEY|MCP_API_KEY|\w*(?:PASSWORD|SECRET|TOKEN|PRIVATE_KEY|AUTH)\w*|TWILIO_\w+|LANGFUSE_\w+)"
+SECRET_READS = [
+    (rf"(?i)\$\{{?{SECRET_VAR}\b", "expands a secret environment variable"),              # $X, ${X}
+    (rf"(?i)\$env:{SECRET_VAR}\b", "reads a secret environment variable"),                 # PowerShell
+    (rf"(?i)%{SECRET_VAR}%", "expands a secret environment variable"),                     # cmd.exe
+    (rf"(?i)\b(?:printenv|getenv|environ(?:\.get)?|process\.env)\W+['\"]?{SECRET_VAR}\b", "reads a secret variable"),
+    (rf"(?i)getenvironmentvariable\(\s*['\"]{SECRET_VAR}", "reads a secret variable"),
+    (r"(?i)(?:^|[;&|(]\s*)(?:env|printenv|set|export\s+-p|declare\s+-x)\s*(?:$|[;&|)])", "lists every environment variable"),
+    (r"(?i)\b(?:gci|ls|dir|get-childitem|get-item)\s+env:", "lists environment variables"),
+    (r"(?i)getenvironmentvariables\(", "lists environment variables"),
+    (r"(?i)\bos\.environ\b(?!\s*\.get\(|\s*\[)", "dumps the environment"),
+    (r"(?i)\b(?:powershell|pwsh)(?:\.exe)?\b.*\s-(?:e|ec|en|enc|encodedcommand)\s", "runs an encoded command that can't be checked"),
+]
+
+
+def env_file_tokens(cmd):
+    """Path-like tokens that name a .env file (or could match one through a wildcard), except .env.example."""
+    found = []
+    for token in re.findall(r"[^\s'\"<>|;&()=,`]+", cmd):
+        name = re.split(r"[\\/]", token)[-1]
+        if name in (".env.example", ".env.sample"):
+            continue
+        if re.fullmatch(r"\.env(\.[\w-]+)?", name):
+            found.append(token)
+        elif re.search(r"[*?\[]", name) and any(fnmatch.fnmatch(n, name) for n in (".env", ".env.local", ".env.prod")):
+            found.append(token)
+    return found
+
+
+def check_secrets(cmd):
+    files = env_file_tokens(cmd)
+    if files:
+        raise Deny(f"{files[0]} may contain secrets. Claude must not read, copy or print .env files; "
+                   "use .env.example and let the developer manage .env.")
+    for pattern, why in SECRET_READS:
+        if re.search(pattern, cmd):
+            raise Deny(f"This command {why}. Claude must never print or handle secrets.")
 
 
 # ---------------------------------------------------------------- files
@@ -256,7 +302,8 @@ def main():
             ctx = post_context(inp, root)
             if ctx:
                 print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": ctx}}))
-        elif tool == "Bash":
+        elif tool in SHELL_TOOLS:
+            check_secrets(inp.get("command", ""))
             check_bash(inp.get("command", ""), root)
         elif tool in ("Read", "Edit", "Write", "MultiEdit", "NotebookEdit"):
             check_path(tool, inp, root, tests_only=(mode == "tests-only"))
