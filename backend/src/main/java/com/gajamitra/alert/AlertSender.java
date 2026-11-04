@@ -58,7 +58,8 @@ class AlertSender {
 	/** Claim, send and record one delivery. Used after commit and by {@link DeliveryRetryJob}. */
 	void deliver(Alert alert, AlertDelivery delivery) {
 		try {
-			Subscriber to = subscribers.findById(delivery.subscriberId()).orElse(null);
+			Subscriber to = delivery.subscriberId() == null ? null
+					: subscribers.findById(delivery.subscriberId()).orElse(null);
 			if (to == null || deliveries.claim(delivery.id()) == 0) {
 				return; // villager deleted meanwhile, or another sender claimed it
 			}

@@ -24,7 +24,8 @@ interface AlertDeliveryRepository extends JpaRepository<AlertDelivery, UUID> {
 	List<AlertDelivery> findByAlertIdAndStatus(UUID alertId, AlertDelivery.Status status);
 
 	@Query("select d from AlertDelivery d where d.status in (com.gajamitra.alert.AlertDelivery.Status.PENDING,"
-			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED) and d.attempts < " + MAX_ATTEMPTS
+			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED) and d.subscriberId is not null and d.attempts < "
+			+ MAX_ATTEMPTS
 			+ " and d.updatedAt < :before order by d.updatedAt")
 	List<AlertDelivery> findRetryable(Instant before, Limit limit);
 
@@ -33,7 +34,8 @@ interface AlertDeliveryRepository extends JpaRepository<AlertDelivery, UUID> {
 	@Modifying
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Query("update AlertDelivery d set d.status = com.gajamitra.alert.AlertDelivery.Status.SENDING,"
-			+ " d.attempts = d.attempts + 1, d.updatedAt = CURRENT_TIMESTAMP where d.id = :id and d.attempts < "
+			+ " d.attempts = d.attempts + 1, d.updatedAt = CURRENT_TIMESTAMP where d.id = :id"
+			+ " and d.subscriberId is not null and d.attempts < "
 			+ MAX_ATTEMPTS + " and d.status in (com.gajamitra.alert.AlertDelivery.Status.PENDING,"
 			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED)")
 	int claim(UUID id);

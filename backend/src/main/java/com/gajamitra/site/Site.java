@@ -8,11 +8,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
-
-/** A monitored boundary. Read-only here; site administration comes with the sites API. */
+/** A monitored boundary. Created and changed only by an ADMIN through {@link SiteService}. */
 @Entity
-@Immutable
 @Table(name = "site")
 public class Site {
 
@@ -41,6 +38,31 @@ public class Site {
 	private int approvalTimeoutS;
 
 	protected Site() {
+	}
+
+	/** A new site starts in SHADOW mode: alerts are stored and logged, no SMS is sent until an ADMIN switches it. */
+	static Site create(SiteForm form) {
+		var site = new Site();
+		site.id = UUID.randomUUID();
+		site.mode = Mode.SHADOW;
+		site.update(form);
+		return site;
+	}
+
+	void update(SiteForm form) {
+		name = form.name().strip();
+		villages = form.villages() == null ? "" : form.villages().strip();
+		officerContact = form.officerContact() == null ? "" : form.officerContact().strip();
+		requiresApproval = form.requiresApproval();
+		approvalTimeoutS = form.approvalTimeoutS();
+	}
+
+	void switchTo(Mode next) {
+		mode = next;
+	}
+
+	public Mode mode() {
+		return mode;
 	}
 
 	public UUID id() {

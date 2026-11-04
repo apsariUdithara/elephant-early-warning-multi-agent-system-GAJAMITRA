@@ -27,6 +27,12 @@ class ApiErrors extends ResponseEntityExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "invalid request");
 	}
 
+	/** A UNIQUE or foreign-key rule refused the write, e.g. two admins adding the same phone at once. */
+	@ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+	ProblemDetail conflict(org.springframework.dao.DataIntegrityViolationException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "this conflicts with existing data");
+	}
+
 	@ExceptionHandler(VideoStorage.NotAVideo.class)
 	ProblemDetail notAVideo(VideoStorage.NotAVideo e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, e.getMessage());

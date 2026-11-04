@@ -366,7 +366,16 @@ session and XSRF cookies are Secure (unless `GAJAMITRA_SECURE_COOKIES=false` for
 SameSite=Lax, with a 30-minute idle timeout. Five wrong passwords lock a username for 15 minutes (in memory, one
 instance). A failed or rejected upload never leaves a file behind.
 Officers see and decide approvals for every site (one pilot site; per-site scoping when there are several).
-Still to build: sites and subscribers CRUD, history, SSE; a per-user upload rate limit; clip duration is checked
+**Built in GM-23** (`site.SiteController`, ADMIN): `GET/POST /api/sites`, `PUT /api/sites/{id}` (name, villages,
+officer contact, approval rule, `approvalTimeoutS` 30–1800 s so an escalation can't be held for long),
+`PUT /api/sites/{id}/mode` (`SHADOW`/`LIVE`; new sites start in `SHADOW`), `GET/POST /api/sites/{id}/subscribers`
+(E.164 phone, unique per site, language `EN|SI|TA`; a concurrent duplicate is 409),
+`DELETE /api/sites/{id}/subscribers/{sid}` (refused while one of their SMS is `PENDING`, `SENDING` or `FAILED` with
+retries left; their deliveries stay, anonymised, and are never claimed again). Every change is audited with the
+admin's name, phones masked. Known limit: a villager removed in the same instant a sender claims their delivery can
+still receive that one SMS. A site switched from `LIVE` to `SHADOW` still sends deliveries already created as
+`PENDING` (the mode is fixed per alert when it is accepted).
+Still to build: history, SSE; a per-user upload rate limit; clip duration is checked
 by the AI service, not on upload; audit entries for logins.
 
 ### Observability
