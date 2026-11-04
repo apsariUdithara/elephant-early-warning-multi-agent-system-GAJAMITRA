@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.0.0...v1.1.0) (2026-11-04)
+
+### Features
+
+* add a Phase 0 script that checks the Meta Model API against the code's assumptions - GM-7 ([#11](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/11)) ([6379977](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/63799774788d6d8416fc6e6aeb05c0fd9352fa91))
+
 ## 1.0.0 (2026-11-04)
 
 ### Features
