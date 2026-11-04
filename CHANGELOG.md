@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.1.0...v1.2.0) (2026-11-04)
+
+### Features
+
+* add the Spring alert policy re-check that reads the shared policy table - GM-11 ([#13](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/13)) ([0408e03](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/0408e03da32ca6f9b4a3b92520f09541853a6d98))
+
 ## [1.1.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.0.0...v1.1.0) (2026-11-04)
 
 ### Features
