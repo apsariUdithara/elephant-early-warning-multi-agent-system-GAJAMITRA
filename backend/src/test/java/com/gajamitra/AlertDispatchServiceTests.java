@@ -194,6 +194,41 @@ class AlertDispatchServiceTests {
 	}
 
 	@Test
+	void aCriticalAlertIsNeverAnEscalationSoItIsNeverHeld() { // invariant 2
+		service.recordAssessment(analysis, "critical", "{}");
+		assertThat(service.sendVillageAlert(analysis, key("escalation", 0), Stage.ESCALATION, DANGER).reason())
+			.contains("not allowed at stage ESCALATION");
+		assertThat(service.sendVillageAlert(analysis, key("now", 0), Stage.NOW, DANGER).status()).isEqualTo("accepted");
+	}
+
+	@Test
+	void aRejectedKeyStoresNothingSoARetryCanSucceedLater() {
+		service.recordAssessment(analysis, "high", "{}");
+		jdbc.update("insert into approval_request (analysis_id, proposed_alert, expires_at) values (?, '{}', now())",
+				analysis);
+		assertThat(service.sendVillageAlert(analysis, key("escalation", 0), Stage.ESCALATION, DANGER).status())
+			.isEqualTo("rejected");
+		jdbc.update("""
+				update approval_request set status = 'TIMED_OUT', decided_at = now() where analysis_id = ?""", analysis);
+		assertThat(service.sendVillageAlert(analysis, key("escalation", 0), Stage.ESCALATION, DANGER).status())
+			.isEqualTo("accepted");
+		assertThat(count("select count(*) from alert where analysis_id = ?")).isOne();
+	}
+
+	@Test
+	void aDeliveryThatMayAlreadyHaveBeenSentIsNeverSentAgain() { // invariant 4
+		// A crash between the SMS and saving SENT leaves SENDING. The schema accepts it and nothing re-sends it.
+		service.recordAssessment(analysis, "high", "{}");
+		service.sendVillageAlert(analysis, key("now", 0), Stage.NOW, WARNING);
+		jdbc.update("""
+				update alert_delivery set status = 'SENDING'
+				where alert_id in (select id from alert where analysis_id = ?)""", analysis);
+		reset(sms);
+		service.sendVillageAlert(analysis, key("now", 0), Stage.NOW, WARNING);
+		verify(sms, never()).send(anyString(), anyString());
+	}
+
+	@Test
 	void everyOutcomeIsInTheAuditLog() { // invariant 11
 		service.recordAssessment(analysis, "high", "{}");
 		service.sendVillageAlert(analysis, key("now", 0), Stage.NOW, DANGER);

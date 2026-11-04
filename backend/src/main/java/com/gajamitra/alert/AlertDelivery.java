@@ -13,12 +13,13 @@ import jakarta.persistence.Table;
 /**
  * One SMS of one alert to one villager. UNIQUE (alert, subscriber) means a retry can never text the same person
  * twice for the same alert (invariant 4). SENT means the provider accepted the message, not that the phone got it.
+ * Status changes only through the conditional updates in {@link AlertDeliveryRepository}.
  */
 @Entity
 @Table(name = "alert_delivery")
 public class AlertDelivery {
 
-	public enum Status { PENDING, SENT, FAILED, SKIPPED_SHADOW }
+	public enum Status { PENDING, SENDING, SENT, FAILED, SKIPPED_SHADOW }
 
 	@Id
 	private UUID id;
@@ -62,23 +63,8 @@ public class AlertDelivery {
 		return status;
 	}
 
-	void sent(String providerId) {
-		requirePending();
-		this.status = Status.SENT;
-		this.providerId = providerId;
-		this.updatedAt = Instant.now();
-	}
-
-	void failed() {
-		requirePending();
-		this.status = Status.FAILED;
-		this.updatedAt = Instant.now();
-	}
-
-	private void requirePending() {
-		if (status != Status.PENDING) {
-			throw new IllegalStateException("delivery " + id + " is already " + status);
-		}
+	public UUID id() {
+		return id;
 	}
 
 }

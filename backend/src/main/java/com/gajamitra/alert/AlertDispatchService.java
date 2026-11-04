@@ -1,5 +1,6 @@
 package com.gajamitra.alert;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -101,7 +102,7 @@ public class AlertDispatchService {
 			.forEach(s -> deliveries.save(new AlertDelivery(alert.id(), s.id(), site.shadow())));
 		audit.record(analysisId, Actor.AGENT, "village_alert_accepted",
 				Map.of("key", key, "stage", stage.name(), "severity", alert.severity(), "shadow", site.shadow()));
-		events.publishEvent(new AlertSender.AlertStored(alert.id()));
+		events.publishEvent(new AlertSender.AlertStored(analysisId, alert.id()));
 		return ToolResult.accepted();
 	}
 
@@ -139,7 +140,7 @@ public class AlertDispatchService {
 	}
 
 	private ToolResult reject(UUID analysisId, String action, String reason, Map<String, Object> details) {
-		var payload = new java.util.HashMap<String, Object>(details);
+		var payload = new HashMap<String, Object>(details);
 		payload.put("reason", reason);
 		audit.record(analysisId, Actor.SYSTEM, action, payload);
 		return ToolResult.rejected(reason);
