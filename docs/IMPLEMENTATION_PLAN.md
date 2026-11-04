@@ -269,6 +269,36 @@ Queues: `analysis.requests`, `analysis.resume` (to Python), `analysis.events` (f
 updates `analysis` status, writes `audit_log`, pushes to SSE emitters. Dead-letter queue for poison messages.
 Events carry an `event_id`; the consumer ignores ones it has already stored, because RabbitMQ delivers at least once.
 
+**Message contract, `schema_version` 1** (GM-20; JSON, persistent; fields may be added, renaming or removing one
+needs a version bump on both sides):
+- `analysis.requests` (Spring → worker): `{schema_version, analysis_id, site_id, video_path, boundary[6]}`.
+- `analysis.resume` (Spring → worker): `{schema_version, analysis_id, decision: approve|reject|timeout, officer,
+  note}`.
+- `analysis.events` (worker → Spring): `{schema_version, event_id, analysis_id, type, …}` with `type`
+  `started` | `approval_required` (+ `escalation`) | `completed` (+ `result`) | `failed` (+ `reason`).
+
+**Built in GM-20** (`messaging`, `approval`, `analysis` packages), no HTTP yet:
+- Queues are durable with a dead-letter queue `analysis.dlq`. A failing event is retried 5 times with backoff, then
+  dead-lettered; never requeued forever, never dropped.
+- The consumer stores `event_id` in `processed_event` in the same transaction as the effect. Status changes never
+  move a finished analysis backwards (out-of-order events). `approval_required` opens one approval per analysis,
+  expiring after the site's `approval_timeout_s`.
+- Officer decision and timeout are conditional updates on `PENDING` (the timeout wins a tie); each publishes
+  `analysis.resume` after commit. The analysis stays `AWAITING_APPROVAL` until the worker's next event.
+- `MessagingRecovery` (every 60 s) republishes requests for analyses `QUEUED` over 2 minutes and resumes for approvals
+  decided over 2 minutes ago whose analysis is still `AWAITING_APPROVAL`, so a publish lost after commit can't hold
+  back an escalation (invariant 9). It also logs at ERROR any analysis `RUNNING` or `AWAITING_APPROVAL` with no
+  progress for 45 minutes (a dead worker, or a message in `analysis.dlq`): loud, for a person to check.
+- An unreadable event, or one missing its type's field (`escalation` for `approval_required`, `reason` for
+  `failed`), goes straight to `analysis.dlq` without retries.
+- **What the worker (GM-22) must do with duplicates** (decided in the GM-20 architecture review):
+  - a request or resume for a thread **waiting at the approval gate** → resume it with the decision;
+  - for a thread with **pending nodes** (crashed mid-run) → continue from the checkpoint (`ainvoke(None)`);
+  - for a **finished** thread → publish `completed` (or `failed`) again from the stored state, never ignore it, so
+    Spring's status always catches up;
+  - after a resume it publishes no `started`; it publishes `completed` (also when the officer rejected) or `failed`;
+  - `officer` and `note` in a resume may be null.
+
 ### MCP server (Spring AI)
 Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_village_alert`, `notify_wildlife_officer`.
 - Internal API key required (header, checked by a Spring Security filter on the MCP endpoint), not reachable from
