@@ -8,6 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from gajamitra.agent import analyze
+from gajamitra.perception import PerceptionError
 
 app = FastAPI(title="GajaMitra")
 
@@ -29,5 +30,9 @@ def analyze_video(video: UploadFile = File(...), boundary: str = Form(...)):
         shutil.copyfileobj(video.file, tmp)
     try:
         return analyze(tmp.name, b)
+    except PerceptionError as e:
+        # Never answer "no elephants" when the camera analysis failed (safety invariant 1).
+        raise HTTPException(502, f"Perception failed, so elephants may be present: treat the risk as unknown "
+                                 f"and check the camera. ({e})") from e
     finally:
         os.unlink(tmp.name)
