@@ -1,5 +1,7 @@
 package com.gajamitra.analysis;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,5 +16,8 @@ public interface AnalysisRepository extends JpaRepository<Analysis, UUID> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select a from Analysis a where a.id = :id")
 	Optional<Analysis> lockById(UUID id);
+
+	/** Recent assessed analyses at a site, newest first (episodic memory for the agents). Bounded to 50. */
+	List<Analysis> findTop50BySiteIdAndRiskNotNullAndCreatedAtAfterOrderByCreatedAtDesc(UUID siteId, Instant after);
 
 }

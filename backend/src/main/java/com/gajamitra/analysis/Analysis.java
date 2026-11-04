@@ -31,6 +31,9 @@ public class Analysis {
 	@ColumnTransformer(write = "?::jsonb")
 	private String summary;
 
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+	private Instant createdAt;
+
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
@@ -43,6 +46,10 @@ public class Analysis {
 
 	public UUID siteId() {
 		return siteId;
+	}
+
+	public Instant createdAt() {
+		return createdAt;
 	}
 
 	/** The stored tracker risk, or null if record_assessment hasn't run yet. */
