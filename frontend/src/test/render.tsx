@@ -36,6 +36,44 @@ export function fakeBackend(routes: Record<string, Handler>) {
 
 export const OFFICER = { username: 'officer', role: 'OFFICER' }
 
+// A stand-in for the browser's EventSource, so a test can open, drop and feed a live stream.
+export class FakeEventSource {
+  static readonly CONNECTING = 0
+  static readonly OPEN = 1
+  static readonly CLOSED = 2
+  static instances: FakeEventSource[] = []
+  readyState = 0
+  onopen: (() => void) | null = null
+  onerror: (() => void) | null = null
+  closed = false
+  readonly url: string
+  private listeners = new Map<string, (() => void)[]>()
+
+  constructor(url: string) {
+    this.url = url
+    FakeEventSource.instances.push(this)
+  }
+
+  addEventListener(type: string, listener: () => void) {
+    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener])
+  }
+
+  close() {
+    this.closed = true
+    this.readyState = FakeEventSource.CLOSED
+  }
+
+  emit(type = 'analysis') {
+    this.listeners.get(type)?.forEach((listener) => listener())
+  }
+}
+
+export function stubEventSource(): typeof FakeEventSource {
+  FakeEventSource.instances = []
+  vi.stubGlobal('EventSource', FakeEventSource)
+  return FakeEventSource
+}
+
 export function renderApp(path = '/') {
   return render(
     <MemoryRouter initialEntries={[path]}>

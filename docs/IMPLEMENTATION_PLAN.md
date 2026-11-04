@@ -473,6 +473,25 @@ signed-in users, deleted with the footage after 30 days).
     times formatted for Sri Lanka, language names in their own script. The Sinhala and Tamil wording is a first
     draft: **a native speaker must review it before real use.**
   - Model-written and worker-written text (alert text, failure reasons, notes) is always rendered as plain text.
+- **Built in GM-29** (live analysis page and the approvals queue):
+  - `GET /api/approvals` now also returns `proposedAlerts` (what approving would send, all three languages; null if the
+    stored text cannot be read) and `serverNow`. The queue's countdown uses the **server's** clock (offset measured when
+    the list arrives), so a wrong clock in the browser can never make the escalation look sent, or held, when it is not.
+  - **Approvals page** (`/approvals`): says at the top that the warning for each analysis has already been sent,
+    that approving sends only the escalation, and that if nobody decides it is sent automatically when the countdown
+    ends. Approve and reject both ask for confirmation with their consequence ("the warning that was already sent stays
+    in place"), cannot be submitted twice, keep the note on failure, and a 409 (already decided, or the time ran out) is
+    explained. The result is shown at the top because the card disappears when the list refreshes (it polls every 10 s
+    and says when the data may be out of date). Approve is disabled when the proposed text cannot be shown. Rejecting
+    only holds the escalation back; it never cancels the warning.
+  - **Analysis page** (`/analyses/:id`): status and risk, every alert in three languages with its stage and whether it was
+    a test (shadow mode) or real, each SMS state as text (a failed SMS is never shown as sent), the officer report and
+    how the guard and verifier decided. Live updates over SSE: an event re-reads the analysis, the page says when the
+    connection dropped ("may be out of date") or was refused ("live updates stopped"), and the stream is closed when
+    the page is left.
+  - Still to build: new analysis with the boundary picker, history per site, admin; evidence keyframes on the
+    approval screen. **Visual review in a browser and native-speaker review of the Sinhala and Tamil strings are still
+    open.**
 
 ---
 

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { parseAnalysisList } from '../api/parse'
 import { useApi } from '../api/useApi'
 import RiskBadge from '../components/RiskBadge'
@@ -19,9 +20,9 @@ export default function AnalysesPage() {
         <ul className="analysis-list">
           {state.data.map((a) => (
             <li key={a.id} className="analysis-row">
-              <span className="analysis-status" data-status={a.status}>
+              <Link className="analysis-status" data-status={a.status} to={`/analyses/${encodeURIComponent(a.id)}`}>
                 {t(`status.${a.status}`)}
-              </span>
+              </Link>
               {a.risk ? <RiskBadge risk={a.risk} /> : <span className="muted">{t('analyses.riskPending')}</span>}
               <span className="muted analysis-time">
                 {t('analyses.started')}: <time dateTime={a.createdAt}>{formatDateTime(a.createdAt)}</time>

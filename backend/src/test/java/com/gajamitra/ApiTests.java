@@ -135,10 +135,18 @@ class ApiTests {
 				'AWAITING_APPROVAL') returning id""", UUID.class, site);
 		UUID approval = jdbc.queryForObject("""
 				insert into approval_request (analysis_id, proposed_alert, expires_at)
-				values (?, '[]', now() + interval '2 minutes') returning id""", UUID.class, analysis);
+				values (?, '[{"severity": "danger", "en": "DANGER: elephants at the fence", "si": "අලි", "ta": "யானை"}]',
+				now() + interval '2 minutes') returning id""", UUID.class, analysis);
 		mvc.perform(get("/api/approvals").with(user(officer).roles("OFFICER")))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$[?(@.id == '" + approval + "')]").exists());
+			.andExpect(jsonPath("$[?(@.id == '" + approval + "')]").exists())
+			// The officer sees exactly what approving would send, in all three languages.
+			.andExpect(jsonPath("$[?(@.id == '" + approval + "')].proposedAlerts[0].severity",
+					org.hamcrest.Matchers.contains("danger")))
+			.andExpect(jsonPath("$[?(@.id == '" + approval + "')].proposedAlerts[0].si",
+					org.hamcrest.Matchers.contains("අලි")))
+			// The server's own clock, so the page's countdown doesn't depend on the browser's clock.
+			.andExpect(jsonPath("$[?(@.id == '" + approval + "')].serverNow", org.hamcrest.Matchers.hasSize(1)));
 		String decision = "{\"decision\": \"APPROVE\", \"note\": \"herd at the fence\"}";
 		mvc.perform(post("/api/approvals/" + approval).contentType(MediaType.APPLICATION_JSON).content(decision)
 			.with(user(officer).roles("OFFICER")).with(csrf()))

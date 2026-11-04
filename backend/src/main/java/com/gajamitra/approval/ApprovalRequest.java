@@ -64,6 +64,11 @@ public class ApprovalRequest {
 		return analysisId;
 	}
 
+	/** The escalation the officer is asked to approve, as the AI service proposed it (JSON text). */
+	public String proposedAlert() {
+		return proposedAlert;
+	}
+
 	public String status() {
 		return status;
 	}

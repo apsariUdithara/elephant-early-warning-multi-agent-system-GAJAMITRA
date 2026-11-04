@@ -3,6 +3,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './Layout'
 import AnalysesPage from './pages/AnalysesPage'
+import AnalysisPage from './pages/AnalysisPage'
+import ApprovalsPage from './pages/ApprovalsPage'
 import Login from './pages/Login'
 
 export default function App() {
@@ -11,6 +13,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
         <Route index element={<AnalysesPage />} />
+        <Route path="analyses/:id" element={<AnalysisPage />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

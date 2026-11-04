@@ -4,7 +4,8 @@ import type { Lang, MessageKey } from './messages'
 export interface I18n {
   lang: Lang
   setLang: (lang: Lang) => void
-  t: (key: MessageKey) => string
+  /** A complete sentence by key; `{name}` placeholders are filled from `values` (no concatenated fragments). */
+  t: (key: MessageKey, values?: Record<string, string | number>) => string
   /** Date and time in the page language's locale (Sri Lanka). */
   formatDateTime: (iso: string) => string
 }

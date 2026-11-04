@@ -40,7 +40,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         }
         setLangState(next)
       },
-      t: (key) => dictionaries[lang][key],
+      t: (key, values) =>
+        dictionaries[lang][key].replace(/\{(\w+)\}/g, (placeholder, name: string) => String(values?.[name] ?? placeholder)),
       formatDateTime: (iso) => {
         const date = new Date(iso)
         return Number.isNaN(date.getTime())
