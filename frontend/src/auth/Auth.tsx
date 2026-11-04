@@ -31,7 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       login: async (username, password) => {
         await api<void>('/api/login', { method: 'POST', form: new URLSearchParams({ username, password }), anonymousOk: true })
-        setSession(await loadSession())
+        const next = await loadSession()
+        setSession(next)
+        return next
       },
       logout: async () => {
         try {
