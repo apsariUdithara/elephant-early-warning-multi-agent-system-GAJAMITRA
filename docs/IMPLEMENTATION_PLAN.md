@@ -217,7 +217,7 @@ run where the warning is dispatched *before* the interrupt, and approve / reject
 ## Phase 3: Spring Boot backend (Java 21, Maven)
 ### Dependencies
 web, validation, data-jpa, postgresql, flyway, security, amqp, actuator, `spring-ai-starter-mcp-server-webmvc`,
-`com.twilio.sdk:twilio`, springdoc-openapi; tests: JUnit 5, Mockito, Testcontainers (Postgres, RabbitMQ).
+Twilio over `RestClient` (no SDK, GM-18), springdoc-openapi; tests: JUnit 5, Mockito, Testcontainers (Postgres, RabbitMQ).
 
 ### Packages (feature-based)
 `site`, `analysis`, `alert`, `approval`, `audit`, `auth`, `messaging`, `mcp`, `sms`.
@@ -304,14 +304,19 @@ Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_vil
   provider calls per delivery in all (`attempts`, migration V3). Rows in `SENDING` for over 5 minutes are never resent
   ("maybe sent") and are logged at ERROR for a person to check.
 - **Still to build** (GM-14 review):
-  - a timeout on every `SmsGateway.send` (with Twilio), and sending off the MCP request thread, so a slow provider
-    can't hold up the agent;
+  - sending off the MCP request thread, so even with the Twilio timeouts (GM-18) a large village list can't hold up
+    the agent's tool call;
   - the escalation hold reads `hold_escalation` from the policy table instead of relying on `escalation_severity`
     being null for `critical`.
 
 ### SMS
 `SmsGateway` with `TwilioSmsGateway` and `LoggingSmsGateway` (selected by `gajamitra.sms.enabled`).
 Per-recipient language selection; Unicode segments; delivery status stored.
+**Built in GM-18:** `TwilioSmsGateway` calls Twilio's Messages REST API with Spring's `RestClient` (connect 5 s, read
+10 s) instead of the `com.twilio.sdk:twilio` library: one POST needs no SDK, and the timeouts are explicit. Any non-2xx
+answer, timeout or missing message sid throws, so the delivery becomes `FAILED` and the retry job takes it. Enabling
+SMS without all three `TWILIO_` values stops startup. `SENT` means Twilio accepted the message; delivery receipts
+(status callbacks) are not built yet.
 
 ### Security
 Spring Security session login (same-origin SPA), BCrypt, roles: OFFICER (view, approve), ADMIN (+ sites, subscribers).
