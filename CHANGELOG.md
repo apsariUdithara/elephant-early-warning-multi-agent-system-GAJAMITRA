@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.7.0...v1.8.0) (2026-11-04)
+
+### Features
+
+* add the Python MCP client so the agent graph can call Spring's tools - GM-19 ([#19](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/issues/19)) ([97a1ea0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/97a1ea0ad4be1378c2e63100fa573843b973551e))
+
 ## [1.7.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.6.0...v1.7.0) (2026-11-04)
 
 ### Features
