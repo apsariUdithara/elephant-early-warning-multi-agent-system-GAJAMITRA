@@ -50,22 +50,38 @@ services:
     # Local only. Behind Caddy later, /mcp must stay unreachable from outside (plan Phase 3, Security).
     ports: ["127.0.0.1:8080:8080"]
     volumes: [videos:/data/videos]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      retries: 20
+      start_period: 20s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
 
   worker:
     build: {context: ., dockerfile: ai-service/Dockerfile}
+    # Starts once Spring is healthy, i.e. its queues exist and /mcp answers.
     depends_on:
-      backend: {condition: service_started}
+      backend: {condition: service_healthy}
       postgres: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
     environment:
-      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-gajamitra}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
-      LANGGRAPH_DB_URL: postgresql://${POSTGRES_USER:-gajamitra}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gajamitra}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-gajamitra}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-gajamitra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-gajamitra}
       MCP_URL: http://backend:8080/mcp
       MCP_API_KEY: ${MCP_API_KEY}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
     # The worker reads the clips the backend stored (same path in both containers).
     volumes: [videos:/data/videos:ro]
-    restart: on-failure
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # A crash loop stops after 5 tries instead of hammering the broker and the Meta API.
+    restart: on-failure:5
 
 volumes:
   pgdata:

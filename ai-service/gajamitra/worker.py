@@ -9,7 +9,9 @@ Rules (plan Phase 4 and the GM-20 architecture review):
   ever silently ignored, so Spring's status always catches up (invariants 9, 10).
 - Any failure of the run is published as a `failed` event with a reason (never mistaken for "no elephants").
 
-Run: python -m gajamitra.worker (settings: RABBITMQ_URL, LANGGRAPH_DB_URL, MCP_URL, MCP_API_KEY, MODEL_API_KEY).
+Run: python -m gajamitra.worker. Settings (host, user and password are separate, never one URL): RABBITMQ_HOST,
+RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD,
+POSTGRES_DB, MCP_URL, MCP_API_KEY, MODEL_API_KEY.
 """
 import asyncio
 import json
@@ -145,20 +147,29 @@ def main():
     import aio_pika
     import psycopg
     from langgraph.checkpoint.postgres import PostgresSaver
+    from psycopg.conninfo import make_conninfo
 
     from gajamitra.agent import meta_chat
     from gajamitra.mcp_client import McpToolClient
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    db_url = os.environ["LANGGRAPH_DB_URL"]
-    with psycopg.connect(db_url, autocommit=True) as conn:
+    if not os.environ.get("MODEL_API_KEY"):
+        # Every analysis will fail (visibly, as FAILED in Spring); say so at start instead of on the first clip.
+        log.error("MODEL_API_KEY is not set: every analysis will fail at the SAM 3.1 step")
+    # Host, user and password come as separate settings (never inside a URL), so special characters in a password
+    # can't break the connection and no URL carrying a password is ever built or logged.
+    env = os.environ
+    db = {"host": env.get("POSTGRES_HOST", "localhost"), "port": env.get("POSTGRES_PORT", "5432"),
+          "user": env["POSTGRES_USER"], "password": env["POSTGRES_PASSWORD"], "dbname": env["POSTGRES_DB"]}
+    with psycopg.connect(make_conninfo(**db), autocommit=True) as conn:
         conn.execute("create schema if not exists langgraph")  # own schema: never mixes with Flyway's tables
-    separator = "&" if "?" in db_url else "?"
-    checkpoint_url = f"{db_url}{separator}options=-csearch_path%3Dlanggraph"
+    checkpoint_conninfo = make_conninfo(**db, options="-csearch_path=langgraph")  # its tables stay in that schema
 
     async def run(checkpointer):
         loop = asyncio.get_running_loop()
-        connection = await aio_pika.connect_robust(os.environ["RABBITMQ_URL"])
+        connection = await aio_pika.connect_robust(
+            host=env.get("RABBITMQ_HOST", "localhost"), login=env["RABBITMQ_DEFAULT_USER"],
+            password=env["RABBITMQ_DEFAULT_PASS"])
         async with connection:
             events_channel = await connection.channel()
 
@@ -177,7 +188,7 @@ def main():
             log.info("worker ready")
             await asyncio.Future()  # run until stopped
 
-    with PostgresSaver.from_conn_string(checkpoint_url) as checkpointer:
+    with PostgresSaver.from_conn_string(checkpoint_conninfo) as checkpointer:
         checkpointer.setup()
         asyncio.run(run(checkpointer))
 

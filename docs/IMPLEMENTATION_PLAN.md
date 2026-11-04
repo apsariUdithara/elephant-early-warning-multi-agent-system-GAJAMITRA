@@ -467,7 +467,12 @@ built from the repo root so the shared policy table is included), `ai-service/Do
 editable install so `policy.py` finds `/app/policy`, non-root, runs `python -m gajamitra.worker`),
 `.dockerignore` (keeps `.env`, data and build output out of images), and `docker-compose.yml` with `backend` and
 `worker` services: healthcheck-ordered start, a shared `videos` volume (read-only for the worker), all ports on
-127.0.0.1. The worker restarts until Spring has declared the queues.
+127.0.0.1. The backend has a health check (`/actuator/health`) and the worker starts only once it is healthy, so
+the queues exist. Both containers drop all capabilities and set `no-new-privileges`; the worker's crash loop stops
+after 5 restarts. The worker takes the broker and database host, user and password as separate settings, never as a
+URL (special characters in a password can't break it and no URL with a password is built or logged), and logs an
+ERROR at start when `MODEL_API_KEY` is missing. Known follow-ups from the security review: pin the base images to
+exact versions, add memory and CPU limits, and persist the SAM cache across restarts.
 Smoke-tested with throwaway credentials: login → upload → `analysis.requests` → worker `started` → SAM fails without
 an API key → `failed` → analysis `FAILED`, all audited (no credits spent). Still to add: the frontend stage and Caddy
 (port 443 only, `/mcp` not routed).

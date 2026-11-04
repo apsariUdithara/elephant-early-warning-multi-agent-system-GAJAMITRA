@@ -2,6 +2,14 @@
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+*.pem
+*.key
+*.p12
+*.mp4
+docs
+evals
 .git
 .venv
 .vscode

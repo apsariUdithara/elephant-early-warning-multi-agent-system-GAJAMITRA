@@ -3,7 +3,9 @@
 #   docker build -f ai-service/Dockerfile -t gajamitra-worker .
 FROM python:3.11-slim
 WORKDIR /app
-RUN useradd --system --uid 10001 gajamitra
+# A home directory (some libraries expect a writable HOME) and the clips mount point, owned by the same user as in
+# the backend image so a volume first created by either container is writable by the backend.
+RUN useradd --system --create-home --uid 10001 gajamitra && mkdir -p /data/videos && chown gajamitra /data/videos
 COPY ai-service/pyproject.toml ai-service/
 COPY ai-service/gajamitra/ ai-service/gajamitra/
 COPY policy/ policy/
