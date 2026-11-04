@@ -234,6 +234,18 @@ web, validation, data-jpa, postgresql, flyway, security, amqp, actuator, `spring
   decided_by, note, decided_at)
 - `audit_log` (analysis, actor `AGENT|OFFICER|SYSTEM`, action, payload JSONB, timestamp)
 - `app_user` (username, password hash, role `ADMIN|OFFICER`)
+- `processed_event` (event id the events consumer has handled; at-least-once delivery)
+
+**Data retention and deletion** (decided with the user, GM-10; enforced by a scheduled Spring job, not built yet):
+- **Footage:** the video file is deleted 30 days after upload. The `analysis` row stays; `video_path` is cleared and
+  `video_deleted_at` set (the database checks they change together).
+- **Alerts, deliveries, officer reports, approvals, audit log, processed events and the analysis row:** kept 1 year,
+  then deleted child-first (foreign keys to `analysis` are RESTRICT, so nothing disappears by accident).
+- **Deleting a villager (subscriber):** their `alert_delivery` rows are kept for the audit trail with `subscriber_id`
+  set to null, so no phone number remains. The service refuses the delete while any of their deliveries is `PENDING`,
+  so a retry can't send twice to the same phone (invariant 4).
+- Every `idempotency_key` must start with its own `analysis_id` (database check), and an `APPROVED` or `REJECTED`
+  approval must name the officer (`decided_by`); `TIMED_OUT` has none.
 
 ### REST API
 - `POST /api/analyses` (multipart: video, boundary, siteId): validate (6 numbers 0–1, MP4, size limit),
