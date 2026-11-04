@@ -86,7 +86,14 @@ One VM running docker compose. Only Caddy publishes a port.
 | `frontend/` | React + TypeScript, Vite (skeleton) |
 | `policy/policy_table.json` | Alert guardrail table shared by Python and Java |
 | `docker-compose.yml` | Local PostgreSQL and RabbitMQ |
-| `docs/` | Architecture, implementation plan |
+| `docs/` | Architecture, implementation plan, `development/` (Claude Code toolkit guide and quick start) |
+| `CLAUDE.md`, `.claude/` | Engineering handbook, path rules, skills, review agents and the guard hook used with Claude Code |
+| `.github/workflows/` | CI, PR checks (commit messages, PR title) and semantic-release |
+| `package.json`, `.releaserc.json`, `commitlint.config.mjs` | Release and commit-message tooling (not an application) |
+
+## Contributing
+
+Branch per task (`<type>/GM-<n>-<slug>`), commit as `<type>: <message>` (`feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `test`, `build`, `ci`, `chore`, `revert`), and title PRs `<type>: <message> - GM-<n>`. PRs are squash-merged; releases, tags and `CHANGELOG.md` are produced automatically by semantic-release. Details: [docs/development/CLAUDE_CODE_TOOLKIT.md](docs/development/CLAUDE_CODE_TOOLKIT.md).
 
 ## Run the prototype
 

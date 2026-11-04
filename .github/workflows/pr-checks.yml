@@ -1,0 +1,48 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Title is "<type>: <message> - GM-<n>" and the description has no AI attribution'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Keep the type list in sync with CLAUDE.md, commitlint.config.mjs, .releaserc.json and .claude/hooks/guard.py.
+          pattern='^(feat|fix|perf|refactor|docs|style|test|build|ci|chore|revert)!?: .+ - GM-[1-9][0-9]*$'
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "::error::PR title must be '<type>: <message> - GM-<n>' (approved types: feat, fix, perf, refactor, docs, style, test, build, ci, chore, revert). Got: $TITLE"
+            exit 1
+          fi
+          if printf '%s' "$BODY" | grep -Eiq 'co-authored-by[[:space:]]*:|generated with \[?claude code'; then
+            echo "::error::The PR description must not contain AI co-author or attribution lines."
+            exit 1
+          fi
+
+  commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: 'Every commit in the PR follows "<type>: <message>"'
+        run: npx commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose

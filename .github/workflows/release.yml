@@ -1,0 +1,43 @@
+name: Release
+
+# semantic-release reads the commit types merged into main since the last tag, then creates the
+# tag, the GitHub Release and the CHANGELOG.md commit. It pushes with a GitHub App token because
+# the App is the only actor allowed to bypass the main branch ruleset.
+# Setup: docs/development/CLAUDE_CODE_TOOLKIT.md, "Release automation".
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Skipped (not failed) until the GitHub App is configured.
+    if: ${{ vars.RELEASE_APP_ID != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get a GitHub App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        run: npx semantic-release
