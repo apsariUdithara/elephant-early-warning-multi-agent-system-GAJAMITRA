@@ -121,8 +121,8 @@ Exit: every spike passes, or the plan is adjusted for the one that failed.
    The client is built on first use, so importing perception in tests/CI needs no API key. Old `run_agent`,
    `TOOLS`, `ACTIONS` are replaced in Phase 2.~~ Done 2026-11-04 (the prototype loop stays in `gajamitra/agent.py` until then).
 3. ~~Delete `trigger_deterrent`, `DETERRENT_URL`, the ESP32 text, and the deterrent card in the UI.~~ Done 2026-11-04.
-4. Add a **SAM result cache** keyed by the video's SHA-256 (JSON on the shared volume). Re-runs and evals then
-   don't pay for SAM again.
+4. ~~Add a **SAM result cache** keyed by the video's SHA-256. Re-runs and evals then
+   don't pay for SAM again.~~ Done in GM-5: raw completed SAM text in `data/sam-cache` (`GAJAMITRA_SAM_CACHE` for the shared volume).
 5. `pyproject.toml` with deps: `openai`, `opencv-python-headless`, `langgraph`, `langgraph-checkpoint-postgres`,
    `langchain-mcp-adapters`, `pydantic`, `aio-pika`, `langfuse`; dev: `pytest`, `ruff`, `deepeval`. (`langchain-openai`
    dropped in GM-8: models sit behind the `ChatModel` port.)
