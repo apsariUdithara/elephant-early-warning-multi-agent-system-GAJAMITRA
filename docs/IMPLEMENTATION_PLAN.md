@@ -398,6 +398,21 @@ same idempotency key twice → one alert row and one SMS, approval timeout → e
    once. Own schema via `?options=-csearch_path%3Dlanggraph` in the connection string, so its tables never mix
    with Flyway's.
 
+**Built in GM-22** (`gajamitra/worker.py`, `python -m gajamitra.worker`; `aio-pika` 10.1.1,
+`langgraph-checkpoint-postgres` 3.2.0, `psycopg` 3.3.6):
+- The graph stays synchronous and runs in a thread (`asyncio.to_thread`), so the consumer loop is never blocked. It
+  therefore uses the **sync `PostgresSaver`** rather than `AsyncPostgresSaver`, in its own `langgraph` schema
+  (created on start).
+- Two channels, prefetch 1 each. A message is acked after the graph yields and its event is published. A graph
+  failure becomes a `failed` event (then acked); a failure to publish or to reach Postgres/RabbitMQ is retried after
+  5 s (nack), so a finished run is never reported `failed` just because the broker blinked.
+- Duplicates follow the GM-20 rules (resume at the gate, continue pending nodes, re-publish a finished outcome);
+  one lock per analysis serialises a duplicate request and a resume.
+- Messages off the contract (wrong version, missing fields, non-UUID id, bad boundary or decision) go to
+  `analysis.dlq`.
+- Known limit: a transient MCP or model error inside the graph ends the run as `failed` (loud, ERROR in Spring);
+  Spring doesn't restart failed analyses yet.
+
 Exit: upload via `curl` → events stream → approval via `curl` → SMS appears in shadow log / Twilio.
 
 ---
