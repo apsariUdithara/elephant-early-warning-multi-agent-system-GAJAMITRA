@@ -120,6 +120,23 @@ describe('leaving and coming back', () => {
     expect(await screen.findByText('Analysing')).toBeInTheDocument()
   })
 
+  it('says so when the password is accepted but the page cannot find out who is signed in', async () => {
+    // For example a backend that is older than the dashboard and has no /api/me.
+    let signedIn = false
+    fakeBackend({
+      'GET /api/me': () => (signedIn ? reply(404) : reply(401)),
+      'POST /api/login': () => {
+        signedIn = true
+        return reply(204)
+      },
+    })
+    renderApp('/login')
+    await userEvent.type(await screen.findByLabelText('Username'), 'admin')
+    await userEvent.type(screen.getByLabelText('Password'), 'correct horse battery')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('cannot be reached')
+  })
+
   it('does not call a refused CSRF token "server unreachable"', async () => {
     fakeBackend({ 'GET /api/me': () => reply(401), 'POST /api/login': () => reply(403) })
     renderApp('/login')
