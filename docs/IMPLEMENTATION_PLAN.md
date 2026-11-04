@@ -342,7 +342,13 @@ same idempotency key twice → one alert row and one SMS, approval timeout → e
    - Request redelivered and the thread already has a checkpoint → resume it (`ainvoke(None, config)`), don't
      restart (invariant 5).
    - RabbitMQ `consumer_timeout` (default 30 min) must exceed the longest SAM call; set the SAM timeout below it.
-2. Replace stub tools with `MultiServerMCPClient` pointing at the Spring MCP endpoint (API key header).
+2. Replace stub tools with an MCP client pointing at the Spring MCP endpoint (API key header).
+   **Built in GM-19** (`gajamitra.mcp_client.McpToolClient`, `mcp` 2.3.0): implements the `ToolClient` port with the
+   official MCP SDK rather than `langchain-mcp-adapters` (`MultiServerMCPClient` turns tools into LangChain tools for
+   a model to call, but the graph calls `ToolClient` methods directly; the adapter also pins `mcp<2`). Settings
+   `MCP_URL` (default `http://localhost:8080/mcp`) and `MCP_API_KEY`. Every call has a 30 s timeout; an error,
+   timeout or malformed answer on a side-effect tool comes back as `rejected` (the graph then fails the run), and a
+   failed read raises. One MCP session per call for now; keep one open once the worker is async.
 3. LangGraph **`AsyncPostgresSaver`** (the worker is async; `PostgresSaver` is the sync variant), run `.setup()`
    once. Own schema via `?options=-csearch_path%3Dlanggraph` in the connection string, so its tables never mix
    with Flyway's.

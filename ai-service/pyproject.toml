@@ -8,6 +8,7 @@ dependencies = [
     "opencv-python-headless>=4.10",
     "pydantic>=2.7",
     "langgraph==1.2.16",
+    "mcp==2.3.0",  # McpToolClient: the graph's tools on Spring's /mcp (plan Phase 4)
     # prototype web app (gajamitra.app), retired once Spring Boot + React replace it
     "fastapi>=0.115",
     "uvicorn>=0.30",
