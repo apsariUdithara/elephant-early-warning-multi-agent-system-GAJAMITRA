@@ -4,7 +4,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from gajamitra.policy import TABLE_PATH, guard, load_table
+from gajamitra.policy import TABLE_PATH, guard, load_table, template_alert
 from gajamitra.schemas import OfficerReport, Proposal, VillageAlert
 
 
@@ -56,7 +56,35 @@ def test_high_risk_warning_goes_out_before_any_approval():
     d = guard(summary("high"), Proposal(alerts=[alert("danger")]), requires_approval=True)
     assert [a.severity for a in d.send_now] == ["warning"] and [a.severity for a in d.escalation] == ["danger"]
     assert d.hold_for_approval
-    assert d.send_now[0].en == d.escalation[0].en  # same text, two levels
+    # The warning carries the warning template; the model's danger wording is kept for the danger escalation only.
+    assert d.send_now[0] == template_alert("warning", 2)
+    assert d.escalation[0].en == alert("danger").en
+
+
+DANGER_WORDING = "DANGER: elephants inside the boundary. Go indoors now."
+
+
+def test_a_lowered_alert_never_keeps_wording_written_for_a_higher_level():
+    # Found in the first real run (GM-25): the model's "Danger: ..." text went out labelled as a warning.
+    proposal = Proposal(alerts=[alert("danger", DANGER_WORDING)])
+    d = guard(summary("high"), proposal, requires_approval=True)
+    (now,) = d.send_now
+    assert now.severity == "warning" and DANGER_WORDING not in (now.en, now.si, now.ta)
+    assert now == template_alert("warning", 2) and "DANGER" not in now.en
+    assert any("template text is sent" in n for n in d.notes)
+
+
+def test_a_raised_alert_never_keeps_wording_written_for_a_lower_level():
+    d = guard(summary("critical"), Proposal(alerts=[alert("advisory", "Elephants may be around")]),
+              requires_approval=True)
+    (now,) = d.send_now
+    assert now == template_alert("danger", 2)  # an advisory's mild wording must not go out as a danger alert
+
+
+def test_an_alert_at_its_allowed_level_keeps_the_models_wording():
+    d = guard(summary("medium"), Proposal(alerts=[alert("warning", "Elephants near the east field")]),
+              requires_approval=False)
+    assert d.send_now[0].en == "Elephants near the east field"  # the model's text is used when it fits
 
 
 @pytest.mark.parametrize("risk", ["medium", "high", "critical"])
@@ -101,7 +129,8 @@ def test_verifier_flagged_aggression_notifies_officer(risk):
 def test_most_severe_of_several_proposed_alerts_is_kept():
     proposal = Proposal(alerts=[alert("advisory", "a"), alert("danger", "d"), alert("warning", "w")])
     d = guard(summary("high"), proposal, requires_approval=True)
-    assert d.send_now[0].en == "d" and d.escalation[0].en == "d"
+    assert d.escalation[0].en == "d"  # the kept (danger) proposal; the warning now is the template (wording, GM-25)
+    assert d.send_now[0] == template_alert("warning", 2)
     assert any("extra" in n for n in d.notes)
 
 

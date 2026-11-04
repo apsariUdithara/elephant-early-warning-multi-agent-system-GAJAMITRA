@@ -187,6 +187,11 @@ reads with the Pydantic models. Still to add: `usage` (tokens, latency).
    - **Template escalation** (decided with the user, GM-8): at `high` risk on a site that requires approval, if no
      valid `danger` alert was proposed, the guard holds a template `danger` escalation for the officer instead of
      losing the escalation path. Like any held escalation, it is sent if the approval times out (invariant 9).
+   - **Wording follows the level** (GM-25, found in the first real run): when the guard lowers or raises a proposed
+     alert's severity, the model's text (written for another level, e.g. "DANGER: …" sent as a warning) is replaced by
+     the template written for the level that is sent. The model's own text is kept where its level is allowed (the
+     `danger` escalation at high risk, an alert at exactly the allowed level). The responder and verifier prompts also
+     say to word each alert for its own severity; the verifier checks it.
    - Alert text is checked deterministically before anything is sent (`schemas.VillageAlert`): at most 320
      characters, no control characters, links or phone numbers, Sinhala text in `si`, Tamil text in `ta`.
    - Several proposed alerts: the most severe is kept, the rest dropped.
