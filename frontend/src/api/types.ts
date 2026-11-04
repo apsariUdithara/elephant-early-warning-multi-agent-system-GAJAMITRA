@@ -20,3 +20,40 @@ export interface AnalysisView {
   risk: Risk | null
   createdAt: string
 }
+
+export type Severity = 'advisory' | 'warning' | 'danger'
+export type DeliveryState = 'PENDING' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED_SHADOW'
+
+/** One alert in all three languages. The text is untrusted AI output: always rendered as plain text. */
+export interface AlertText {
+  severity: Severity
+  en: string
+  si: string
+  ta: string
+}
+
+/** An alert that was accepted and stored. `deliveries` counts villagers per SMS state; never phone numbers. */
+export interface AlertView extends AlertText {
+  stage: 'NOW' | 'ESCALATION'
+  shadow: boolean
+  createdAt: string
+  deliveries: Partial<Record<DeliveryState, number>>
+}
+
+/** GET /api/analyses/{id}. `notes` are the guard's and verifier's decisions, as text. */
+export interface AnalysisDetail extends AnalysisView {
+  failureReason: string | null
+  notes: string[]
+  alerts: AlertView[]
+  officerReport: string | null
+}
+
+/** GET /api/approvals. `proposedAlerts` is null when the stored text could not be read. */
+export interface ApprovalView {
+  id: string
+  analysisId: string
+  expiresAt: string
+  proposedAlerts: AlertText[] | null
+  /** Server clock minus the browser clock when the list arrived: countdowns use server time (see ApprovalsPage). */
+  clockOffsetMs: number
+}

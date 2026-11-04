@@ -221,3 +221,47 @@ input {
 .analysis-status { min-width: min(10rem, 100%); font-weight: 700; overflow-wrap: anywhere; }
 .lang-switch .button { min-width: 44px; }
 .analysis-time { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+
+/* Analysis detail and the approvals queue (GM-29). Text carries the meaning; borders and spacing group it. */
+.analysis-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.connection { margin: 0 0 var(--space-3); font-size: 0.875rem; color: var(--text-muted); }
+.connection[data-connection="reconnecting"] { color: var(--text); font-weight: 700; }
+.notice {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: 4px solid var(--accent);
+  background: var(--surface);
+}
+.notice p { margin: 0 0 var(--space-2); }
+.tag {
+  display: inline-block;
+  margin: 0 0 var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-weight: 700;
+}
+.alert-card, .approval-card {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.alert-card h4, .approval-card h3 { margin: 0 0 var(--space-2); }
+.alert-texts p { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.lang-tag { margin-inline-end: var(--space-2); font-weight: 700; }
+.delivery-list { margin: 0; padding-inline-start: var(--space-4); }
+.count { font-variant-numeric: tabular-nums; font-weight: 700; }
+.approval-list { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.countdown { margin: 0 0 var(--space-3); font-weight: 700; font-variant-numeric: tabular-nums; }
+.confirm { font-weight: 700; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); }
+textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
