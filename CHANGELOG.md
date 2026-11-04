@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.14.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.13.0...v1.14.0) (2026-11-04)
+
+### Features
+
+* add the live analysis page and the officer approvals queue ([4d632fa](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/4d632fa5ce049ea08a6fac3727ee73900b2519c4))
+
+### Bug Fixes
+
+* show a message when sign-in works but the page cannot tell who is signed in ([ac24dcb](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/ac24dcb87765c5614eb73bda4baaacea431e5a48))
+
 ## [1.13.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.12.0...v1.13.0) (2026-11-04)
 
 ### Features
