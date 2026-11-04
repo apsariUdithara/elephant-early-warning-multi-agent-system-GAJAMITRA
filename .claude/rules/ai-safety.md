@@ -7,6 +7,7 @@ paths:
   - "ai-service/gajamitra/graph.py"
   - "ai-service/gajamitra/prompts.py"
   - "ai-service/gajamitra/schemas.py"
+  - "ai-service/gajamitra/ports.py"
   - "policy/**"
 ---
 
@@ -24,7 +25,7 @@ You are editing code that decides whether villagers are warned. The 12 safety in
 | `policy/policy_table.json` | Risk → exact level sent now, escalation level, maximum, officer report, what is held | exists, read by `policy.py` |
 | `ai-service/gajamitra/policy.py` | Applies the table to a proposal: level, template fallback, officer report, `send_now` / `escalation` split | exists (GM-3) |
 | `ai-service/gajamitra/schemas.py` | Proposal, alert, report and guard-decision models (strict, reject unknown fields) | exists (GM-3) |
-| `ai-service/gajamitra/graph.py`, `prompts.py` | Agent flow and prompts | planned (plan Phase 2) |
+| `ai-service/gajamitra/graph.py`, `prompts.py`, `ports.py` | Agent flow (responder, verifier, guard, approval interrupt, dispatch), prompts, ToolClient / ChatModel ports and the stub | exists (GM-8) |
 
 ## Before changing any of these files
 

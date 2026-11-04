@@ -57,6 +57,8 @@ Six layers sit between an agent's proposal and a villager's phone.
 | One `policy_table.json` read by Python and Java | The two guardrails can't drift apart | A shared file across two codebases |
 | Human approval only for escalations, with a timeout that sends | A busy officer must never delay a warning about a herd at the fence | An unapproved "danger" can go out after the timeout |
 | LangGraph checkpoints in Postgres | Interrupt and resume across process restarts without a second database | The worker needs database access (its own schema) |
+| Models behind a `ChatModel` port, no LangChain model layer | One small adapter (`agent.meta_chat`) owns the SDK, timeouts and error translation; output is validated with Pydantic, so `with_structured_output` isn't needed | No LangChain model integrations (tracing comes from Langfuse directly) |
+| Unverified or invalid model text is never sent | The text checks catch form, not false content; the tracker-based template is always truthful | Generic wording while a model is failing |
 | SSE instead of WebSockets | Updates only flow server → browser; SSE works over plain HTTP with the session cookie | No browser → server messages on that channel (REST covers them) |
 | Session login + CSRF instead of JWT | The SPA is served from the same origin, so a cookie session is simpler and safer | Not designed for third-party API clients |
 | Langfuse Cloud for traces | Self-hosting Langfuse v3 needs ClickHouse, Redis and S3 | Traces leave the VM |

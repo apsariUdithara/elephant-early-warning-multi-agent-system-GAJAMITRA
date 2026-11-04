@@ -99,7 +99,7 @@ Purpose: prove every external dependency works before building on it.
 3. **SAM output shape**: run `segment_video` on one clip, save the raw streamed text, confirm `parse_sam`
    handles it (frame markers, box fields, w/h). Check whether boxes come for every frame or sampled frames
    (the dashboard currently looks up `frames[now]` exactly).
-4. **LangChain compatibility**: `ChatOpenAI(base_url=<Meta API>, model=<Muse Spark>)` with (a) image input,
+4. **Model compatibility** (now `scripts/phase0_check.py`; LangChain dropped in GM-8): `ChatOpenAI(base_url=<Meta API>, model=<Muse Spark>)` with (a) image input,
    (b) tool calling, (c) `with_structured_output`. If structured output fails, fall back to `method="function_calling"`.
 5. **MCP interop spike**: a Spring AI MCP server (`spring-ai-starter-mcp-server-webmvc`) exposing one dummy tool,
    called from Python via `langchain-mcp-adapters` (`MultiServerMCPClient`, Streamable HTTP/SSE transport).
@@ -124,16 +124,30 @@ Exit: every spike passes, or the plan is adjusted for the one that failed.
 4. ~~Add a **SAM result cache** keyed by the video's SHA-256. Re-runs and evals then
    don't pay for SAM again.~~ Done in GM-5: raw completed SAM text in `data/sam-cache` (`GAJAMITRA_SAM_CACHE` for the shared volume).
 5. `pyproject.toml` with deps: `openai`, `opencv-python-headless`, `langgraph`, `langgraph-checkpoint-postgres`,
-   `langchain-openai`, `langchain-mcp-adapters`, `pydantic`, `aio-pika`, `langfuse`; dev: `pytest`, `ruff`, `deepeval`.
+   `langchain-mcp-adapters`, `pydantic`, `aio-pika`, `langfuse`; dev: `pytest`, `ruff`, `deepeval`. (`langchain-openai`
+   dropped in GM-8: models sit behind the `ChatModel` port.)
 
 Exit: `pytest` passes (track tests), `python -m gajamitra.cli clip.mp4 --boundary ...` prints tracker summary.
 
 ---
 
 ## Phase 2: Multi-agent pipeline (LangGraph, Python)
+
+> **Status (GM-8):** the graph exists (`graph.py`, `ports.py`, `prompts.py`, `cli.py`) with every node below, run
+> synchronously with an in-memory checkpointer and the `StubToolClient`; 19 graph tests. Decided while building it:
+> - **No LangChain model layer.** Models sit behind a `ChatModel` port (`messages -> text`, Muse Spark through the
+>   existing OpenAI-compatible client). Output is validated with the Pydantic models plus one retry, so
+>   `langchain-openai` and `with_structured_output` aren't needed (Phase 0 step 4 is covered by `scripts/phase0_check.py`).
+> - **Verdict** is `{decision, reasons, aggression}`. The verifier can't suggest a severity: only the guard sets levels.
+>   `reject` discards the responder's text, and the guard sends its template alert; an unreadable verifier reply
+>   counts as `approve` (the guard still applies).
+> - Still to do: Langfuse tracing, timeouts and retries on Muse Spark calls, usage accounting, async + `AsyncPostgresSaver`
+>   and the MCP client (Phase 4).
 ### State (`schemas.py`, Pydantic)
-`analysis_id, site_id, video_path, boundary, fps, frames, summary (from assess), keyframes,
-site_context, assessment, proposal, verdict, revision_count, approval, executed_actions, usage (tokens, latency)`
+As built (GM-8, `graph.State`): `analysis_id, site_id, video_path, boundary, summary (from assess), keyframes, site,
+history, models_started, responder (assessment + proposal), verdict, revisions, decision (guard output), approval,
+dispatched, notes`. Values are plain dicts so the checkpointer can store them; every node re-validates what it
+reads with the Pydantic models. Still to add: `usage` (tokens, latency).
 
 ### Nodes (`graph.py`)
 1. **perceive**: `segment_video` (cached) → `parse_sam` → `assess` → `keyframes`, then MCP
@@ -147,9 +161,12 @@ site_context, assessment, proposal, verdict, revision_count, approval, executed_
    `Assessment {behaviour, calves, reasoning}` + `Proposal {alerts: [VillageAlert{severity, en, si, ta}], officer_report: OfficerReport{report} | null}` (`schemas.py`, done in GM-3).
    It **proposes** but does not execute.
 4. **verifier** (Muse Spark, separate prompt, same evidence): `Verdict {decision: approve|revise|reject, reasons,
-   suggested_severity}`. Checks: is it really an elephant, is it really approaching, does severity match evidence,
-   do the alerts say where, how many and what to do, are all three languages present.
-   `revise` → back to responder with the critique (max 2 rounds, then fall through with the verifier's severity).
+   aggression}`. It can't set a level. Checks: is it really an elephant, is it really approaching, does severity
+   match evidence, do the alerts say where, how many and what to do, are all three languages present.
+   `revise` → back to responder with the critique (max 2 rounds, then the guard decides). `reject` → the guard sends
+   its template. **A verifier that fails or runs out of time counts as `reject`** (decided with the user, GM-8):
+   unverified model text is never sent; the template goes out at the same level and time. Every model call has a
+   timeout, and the whole model phase has a deadline (`MODEL_DEADLINE_S`) after which the guard decides.
 5. **policy_guard** (deterministic, `policy.py`, done in GM-3; the main guardrail). Splits the proposal into
    `send_now` and `escalation` (invariant 2). "Approval" = the site has `requires_approval` on; otherwise nothing is
    held and the escalation is sent right after the warning.
@@ -167,6 +184,11 @@ site_context, assessment, proposal, verdict, revision_count, approval, executed_
      English, Sinhala and Tamil (invariant 1). The Sinhala and Tamil templates need the native-speaker review in Phase 6.
    - **Officer report** at `high`/`critical` or on verifier-flagged aggression; if the responder wrote none, the guard
      sends a template report built from the tracker summary.
+   - **Template escalation** (decided with the user, GM-8): at `high` risk on a site that requires approval, if no
+     valid `danger` alert was proposed, the guard holds a template `danger` escalation for the officer instead of
+     losing the escalation path. Like any held escalation, it is sent if the approval times out (invariant 9).
+   - Alert text is checked deterministically before anything is sent (`schemas.VillageAlert`): at most 320
+     characters, no control characters, links or phone numbers, Sinhala text in `si`, Tamil text in `ta`.
    - Several proposed alerts: the most severe is kept, the rest dropped.
    - An unknown risk value raises an error; the guard never guesses a level.
    - Every raise, downgrade, template, drop or hold is recorded in `notes` (shown on the dashboard).
@@ -239,9 +261,15 @@ Events carry an `event_id`; the consumer ignores ones it has already stored, bec
 Tools: `record_assessment`, `get_site_history`, `get_site_procedures`, `send_village_alert`, `notify_wildlife_officer`.
 - Internal API key required (header, checked by a Spring Security filter on the MCP endpoint), not reachable from
   the public port in compose.
-- `send_village_alert(analysis_id, idempotency_key, ...)`: key already stored → return the stored result, send
-  nothing. Otherwise **re-check severity against the stored tracker risk** using the same table as `policy.py`
-  (second guardrail); **no stored risk → reject** (invariant 3). Then write `alert` + `audit_log` in one
+- `send_village_alert(analysis_id, idempotency_key, stage, alert)` with `stage` `NOW | ESCALATION` and the key
+  `{analysis_id}:{now|escalation}:{index}` (the officer report uses `{analysis_id}:now:report`). Reject a key that
+  doesn't belong to that analysis and stage. Key already stored → return the stored result, send nothing.
+  Otherwise **re-check severity against the stored tracker risk** using the same table as `policy.py` (second
+  guardrail): within `max_severity` and within the stage limit (`send_now_severity` for `NOW`,
+  `escalation_severity` for `ESCALATION`); **no stored risk → reject** (invariant 3). An `ESCALATION` alert is
+  accepted only if the analysis's `approval_request` is `APPROVED` or `TIMED_OUT`, or no approval is required
+  (Spring owns approvals; this is the server-side half of invariants 2 and 9).
+  Answers `{"status": "accepted"}` or `{"status": "rejected", "reason": …}`; the graph fails the run on a rejection. Then write `alert` + `audit_log` in one
   transaction, and deliver after commit: `SHADOW` site → log only; `LIVE` + flag on → Twilio to subscribers in
   their language, skipping deliveries already `SENT`; flag off → dashboard only.
 - `notify_wildlife_officer` uses the same idempotency-key rule.

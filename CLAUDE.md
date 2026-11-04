@@ -20,7 +20,7 @@ SAM 3.1 tracks elephants, Muse Spark agents propose alerts, a deterministic guar
 
 | Now | Target (plan Phases 1–7) |
 |---|---|
-| `ai-service/gajamitra/`: `track.py` (risk maths), `perception.py` (SAM 3.1), `agent.py` (prototype single agent), `app.py` + `index.html` (prototype FastAPI dashboard); `ai-service/tests/test_track.py` | `ai-service/` LangGraph worker (`graph.py`, `policy.py`, `worker.py`, `schemas.py`, `prompts.py`, `cli.py`, `evals/`) |
+| `ai-service/gajamitra/`: `track.py` (risk maths), `perception.py` (SAM 3.1), `policy.py` + `schemas.py` (guard), `graph.py` + `ports.py` + `prompts.py` + `cli.py` (LangGraph pipeline with stub tools), `agent.py` + `app.py` + `index.html` (prototype dashboard); `ai-service/tests/` | `ai-service/` LangGraph **worker** (`worker.py`, MCP client, Postgres checkpointer, `evals/`) |
 | `backend/`: Spring Boot 4.1 skeleton (web, actuator, validation) | `backend/` feature packages, Flyway, Security, AMQP, MCP server, Twilio |
 | `frontend/`: Vite + React + TypeScript placeholder | `frontend/` officer dashboard and villager views |
 | `policy/policy_table.json` (nothing reads it yet), `docker-compose.yml` (Postgres + RabbitMQ only) | Read by `policy.py` and the Java re-check; full compose stack |
