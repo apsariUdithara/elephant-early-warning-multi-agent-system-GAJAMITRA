@@ -1,8 +1,10 @@
 """McpToolClient: anything but a well-formed answer from Spring is a rejection or an error, never a success."""
 import json
 
+import anyio
 import pytest
 from mcp import types
+from mcp.shared.exceptions import MCPError
 
 from gajamitra.mcp_client import McpToolClient, McpUnavailable, _parse
 from gajamitra.schemas import OfficerReport, VillageAlert
@@ -39,7 +41,8 @@ def test_a_rejection_keeps_its_reason():
 
 
 @pytest.mark.parametrize("failure", [McpUnavailable("down"), TimeoutError(), OSError("refused"),
-                                     ExceptionGroup("tg", [OSError("refused")])])
+                                     ExceptionGroup("tg", [OSError("refused")]), anyio.BrokenResourceError(),
+                                     anyio.ClosedResourceError(), MCPError(code=-32603, message="internal")])
 def test_an_unreachable_spring_is_a_rejection_not_a_success(failure):  # invariant 10
     tools, _ = client(failure)
     result = tools.send_village_alert("a1", "a1:now:0", "NOW", ALERT)

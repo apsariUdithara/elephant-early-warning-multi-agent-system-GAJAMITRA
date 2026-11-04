@@ -8,9 +8,11 @@ import asyncio
 import json
 import os
 
+import anyio
 import httpx2
 from mcp import ClientSession
 from mcp.client.streamable_http import create_mcp_http_client, streamable_http_client
+from mcp.shared.exceptions import MCPError
 
 # Longest one tool call may take, connection included. Sending SMS happens after Spring commits, inside the call.
 CALL_TIMEOUT_S = 30.0
@@ -39,7 +41,9 @@ def _parse(result):
 
 
 async def _call_once(url, api_key, name, arguments):
-    # ponytail: one MCP session per call (about five per analysis); keep one session open once the worker is async.
+    # ponytail: one MCP session per call (about five per analysis), run with asyncio.run. The async worker (Phase 4)
+    # can't call asyncio.run inside its loop: it must call this client via asyncio.to_thread or get an async path
+    # that keeps one session open.
     http = create_mcp_http_client(headers={"X-Api-Key": api_key}, timeout=httpx2.Timeout(CALL_TIMEOUT_S))
     async with http, streamable_http_client(url, http_client=http) as (read, write, *_), \
             ClientSession(read, write) as session:
@@ -62,7 +66,8 @@ class McpToolClient:
     def _side_effect(self, name, arguments):
         try:
             answer = self._call(name, arguments)
-        except (McpUnavailable, OSError, TimeoutError, httpx2.HTTPError, ExceptionGroup) as e:
+        except (McpUnavailable, MCPError, OSError, TimeoutError, httpx2.HTTPError, anyio.BrokenResourceError,
+                anyio.ClosedResourceError, ExceptionGroup) as e:
             return {"status": "rejected", "reason": f"MCP call failed ({type(e).__name__})"}
         if not isinstance(answer, dict) or not isinstance(answer.get("status"), str):
             return {"status": "rejected", "reason": "malformed tool answer"}
