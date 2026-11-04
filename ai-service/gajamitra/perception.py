@@ -2,7 +2,11 @@
 import base64
 import functools
 import hashlib
+import json
+import logging
 import os
+import tempfile
+import time
 from pathlib import Path
 
 import cv2
@@ -12,13 +16,20 @@ from gajamitra.track import SamOutputError, parse_sam
 
 # Stream events that end a response; only "response.completed" means the boxes are complete.
 TERMINAL_EVENTS = ("response.completed", "response.failed", "response.incomplete", "error")
-# Longest wait for one SAM 3.1 request (upload or stream). A timeout becomes a PerceptionError, never "no elephants".
-# Keep it below RabbitMQ's consumer_timeout once the worker exists (plan Phase 4).
+# Longest wait for any single network step of a SAM 3.1 call (connect, upload, or the gap between stream chunks).
 SAM_TIMEOUT_S = 300.0
+# Longest a whole SAM stream may take. Keep it below RabbitMQ's consumer_timeout once the worker exists (Phase 4).
+SAM_DEADLINE_S = 900.0
+# No hidden SDK retries: a retry would upload the clip again. A failure is a PerceptionError and the job is retried.
+SAM_MAX_RETRIES = 0
 SAM_MODEL = "sam-3.1"
-# Completed SAM output, cached by clip content + model + prompt, so re-runs and evals don't pay for SAM again.
-# data/ is git-ignored; set GAJAMITRA_SAM_CACHE to put it elsewhere (for example the shared volume in Docker).
+# Completed, readable SAM output is cached by clip content + model + prompt, so re-runs and evals don't pay for SAM
+# again. Entries are verified on read; anything that doesn't verify is a miss, never "no elephants".
+# data/ is git-ignored; GAJAMITRA_SAM_CACHE moves it (use a folder only ai-service writes to).
 SAM_CACHE_DIR = Path(os.environ.get("GAJAMITRA_SAM_CACHE") or Path(__file__).resolve().parents[2] / "data" / "sam-cache")
+CACHE_VERSION = 1
+
+log = logging.getLogger("gajamitra.perception")
 
 
 class PerceptionError(RuntimeError):
@@ -36,17 +47,18 @@ def segment_video(path, concept="elephant", cache_dir=None):
 
     Raises PerceptionError when the call fails, the stream doesn't complete, or the output is unreadable,
     so a perception failure can never be reported as "no elephants" (safety invariant 1).
-    Only completed SAM output is cached.
     """
     cached = _cache_path(path, concept, Path(cache_dir or SAM_CACHE_DIR))
-    if cached.exists():
-        text = cached.read_text(encoding="utf-8")
-    else:
-        text = _stream_sam(path, concept)
-        cached.parent.mkdir(parents=True, exist_ok=True)
-        tmp = cached.with_suffix(".tmp")
-        tmp.write_text(text, encoding="utf-8")
-        tmp.replace(cached)
+    text = _read_cache(cached)
+    if text is not None:
+        return _parse(text)
+    text = _stream_sam(path, concept)
+    result = _parse(text)  # parse first: output that can't be read is never cached
+    _write_cache(cached, text)
+    return result
+
+
+def _parse(text):
     try:
         return parse_sam(text)
     except SamOutputError as e:
@@ -54,18 +66,54 @@ def segment_video(path, concept="elephant", cache_dir=None):
 
 
 def _cache_path(path, concept, cache_dir):
-    digest = hashlib.sha256()
+    clip = hashlib.sha256()
     with open(path, "rb") as f:
         for block in iter(lambda: f.read(1 << 20), b""):
-            digest.update(block)
-    digest.update(f"|{SAM_MODEL}|{concept}".encode())
-    return cache_dir / f"{digest.hexdigest()}.txt"
+            clip.update(block)
+    key = json.dumps([clip.hexdigest(), SAM_MODEL, concept, CACHE_VERSION])  # unambiguous: no separator tricks
+    return cache_dir / f"{hashlib.sha256(key.encode()).hexdigest()}.json"
+
+
+def _read_cache(path):
+    """The cached SAM text, or None (a miss) when the entry is missing, unreadable, cut short or altered."""
+    try:
+        entry = json.loads(path.read_text(encoding="utf-8"))
+        text = entry["text"]
+        if (entry.get("v") != CACHE_VERSION or entry.get("status") != "completed" or len(text) != entry["len"]
+                or hashlib.sha256(text.encode("utf-8")).hexdigest() != entry["sha256"]):
+            raise ValueError("entry doesn't verify")
+        return text
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        log.warning("ignoring SAM cache entry %s: %s", path.name, e)
+        return None
+
+
+def _write_cache(path, text):
+    """Best effort: a cache that can't be written never fails an analysis SAM already completed."""
+    entry = json.dumps({"v": CACHE_VERSION, "status": "completed", "len": len(text),
+                        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(), "text": text})
+    tmp = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False) as f:
+            tmp = f.name  # one temp file per writer, so concurrent writers never share a half-written file
+            f.write(entry)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except OSError as e:
+        log.warning("could not write SAM cache entry %s: %s", path.name, e)
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def _stream_sam(path, concept):
     """Upload the clip and return SAM 3.1's complete streamed text, or raise PerceptionError."""
     chunks, final = [], None
-    client = meta().with_options(timeout=SAM_TIMEOUT_S)
+    client = meta().with_options(timeout=SAM_TIMEOUT_S, max_retries=SAM_MAX_RETRIES)
+    started = time.monotonic()
     try:
         with open(path, "rb") as f:
             file = client.files.create(file=f, purpose="user_data")
@@ -74,6 +122,8 @@ def _stream_sam(path, concept):
                 {"type": "input_text", "text": concept},
                 {"type": "input_file", "file_id": file.id}]}]) as stream:
             for event in stream:
+                if time.monotonic() - started > SAM_DEADLINE_S:
+                    raise PerceptionError(f"SAM 3.1 stream took longer than {SAM_DEADLINE_S:.0f} s")
                 if event.type == "response.output_text.delta":
                     chunks.append(event.delta)
                 elif event.type in TERMINAL_EVENTS:

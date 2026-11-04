@@ -38,6 +38,7 @@ def test_empty_sam_output_means_no_elephants():
     "Internal server error",                               # an error message instead of boxes
     "<0f><3f>",                                            # frame markers but no readable box
     "<0f>0<|bbox;x1=1;y1=1;x2=2;y2=2;w=9;h=9|>",           # a renamed field: format change
+    "  \n",                                                # whitespace is not "no matches"
 ])
 def test_unreadable_sam_output_is_never_no_elephants(text):
     # Invariant 1 (no silent herd): non-empty output without a readable box is a failure, not "no elephants".
