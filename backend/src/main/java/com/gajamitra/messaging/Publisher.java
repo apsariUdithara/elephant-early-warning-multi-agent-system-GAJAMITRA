@@ -11,6 +11,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import tools.jackson.databind.json.JsonMapper;
 
+import com.gajamitra.analysis.AnalysisChanged;
 import com.gajamitra.messaging.Messages.AnalysisRequest;
 import com.gajamitra.messaging.Messages.Resume;
 
@@ -24,10 +25,13 @@ public class Publisher {
 
 	private final RabbitTemplate rabbit;
 
+	private final org.springframework.context.ApplicationEventPublisher events;
+
 	private final JsonMapper json = JsonMapper.builder().build();
 
-	Publisher(RabbitTemplate rabbit) {
+	Publisher(RabbitTemplate rabbit, org.springframework.context.ApplicationEventPublisher events) {
 		this.rabbit = rabbit;
+		this.events = events;
 	}
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -38,6 +42,11 @@ public class Publisher {
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	void onResume(Resume resume) {
 		send(MessagingConfiguration.RESUME, resume);
+	}
+
+	/** Tell open dashboards (after commit) that an analysis changed. */
+	void changed(java.util.UUID analysisId, String kind) {
+		events.publishEvent(new AnalysisChanged(analysisId, kind));
 	}
 
 	void send(String queue, Object body) {

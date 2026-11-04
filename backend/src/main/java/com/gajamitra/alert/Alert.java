@@ -72,6 +72,14 @@ public class Alert {
 		return id;
 	}
 
+	public Stage stage() {
+		return stage;
+	}
+
+	public Instant createdAt() {
+		return createdAt;
+	}
+
 	public String severity() {
 		return severity;
 	}

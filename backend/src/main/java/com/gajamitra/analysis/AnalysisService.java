@@ -32,6 +32,7 @@ public class AnalysisService {
 		Analysis analysis = analyses.save(Analysis.queued(siteId, videoPath, boundary));
 		audit.record(analysis.id(), Actor.SYSTEM, "analysis_queued", Map.of("site_id", siteId.toString()));
 		events.publishEvent(MessagingRecovery.request(analysis));
+		events.publishEvent(new AnalysisChanged(analysis.id(), "queued"));
 		return analysis.id();
 	}
 

@@ -123,6 +123,9 @@ class EventsConsumer {
 		};
 		audit.record(analysis.id(), Actor.AGENT, "event_" + event.type(),
 				Map.of("event_id", event.event_id().toString(), "status_changed", changed));
+		if (changed) {
+			publisher.changed(analysis.id(), event.type());
+		}
 	}
 
 }

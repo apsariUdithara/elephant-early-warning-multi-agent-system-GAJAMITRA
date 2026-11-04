@@ -12,6 +12,7 @@ import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gajamitra.analysis.AnalysisChanged;
 import com.gajamitra.audit.AuditEntry.Actor;
 import com.gajamitra.audit.AuditLog;
 import com.gajamitra.messaging.Messages;
@@ -54,6 +55,7 @@ public class ApprovalService {
 		Instant now = clock.instant();
 		approvals.save(new ApprovalRequest(analysisId, proposedAlertJson, now, now.plus(timeout)));
 		audit.record(analysisId, Actor.SYSTEM, "approval_opened", Map.of("expires_in_s", timeout.toSeconds()));
+		events.publishEvent(new AnalysisChanged(analysisId, "approval"));
 	}
 
 	/** The officer's decision. False if it was already decided or has expired (the timeout already released it). */
@@ -69,6 +71,7 @@ public class ApprovalService {
 		}
 		audit.record(approval.analysisId(), Actor.OFFICER, "approval_" + status.toLowerCase(),
 				Map.of("officer", officer.toString()));
+		events.publishEvent(new AnalysisChanged(approval.analysisId(), "approval"));
 		events.publishEvent(resume(approval.analysisId(), decision == Decision.APPROVE ? "approve" : "reject",
 				officer.toString(), note));
 		return true;
@@ -81,6 +84,7 @@ public class ApprovalService {
 		for (var approval : approvals.findByStatusAndExpiresAtLessThanEqual("PENDING", now, Limit.of(BATCH))) {
 			if (approvals.timeOut(approval.id(), now) == 1) {
 				audit.record(approval.analysisId(), Actor.SYSTEM, "approval_timed_out", Map.of());
+				events.publishEvent(new AnalysisChanged(approval.analysisId(), "approval"));
 				events.publishEvent(resume(approval.analysisId(), "timeout", null, null));
 				log.info("approval for analysis {} timed out: the escalation is released", approval.analysisId());
 				timedOut++;

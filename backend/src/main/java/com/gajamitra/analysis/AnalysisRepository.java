@@ -20,6 +20,10 @@ public interface AnalysisRepository extends JpaRepository<Analysis, UUID> {
 	List<Analysis> findByStatusAndCreatedAtBefore(Analysis.Status status, Instant before,
 			org.springframework.data.domain.Limit limit);
 
+	List<Analysis> findTop50BySiteIdOrderByCreatedAtDesc(UUID siteId);
+
+	List<Analysis> findTop50ByOrderByCreatedAtDesc();
+
 	long countByStatusInAndUpdatedAtBefore(java.util.Collection<Analysis.Status> statuses, Instant before);
 
 	/** Recent assessed analyses at a site, newest first (episodic memory for the agents). Bounded to 50. */

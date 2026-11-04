@@ -23,6 +23,13 @@ interface AlertDeliveryRepository extends JpaRepository<AlertDelivery, UUID> {
 
 	List<AlertDelivery> findByAlertIdAndStatus(UUID alertId, AlertDelivery.Status status);
 
+	List<AlertDelivery> findByAlertId(UUID alertId);
+
+	/** Rows of (alert id, status, how many deliveries): one query for all alerts of an analysis. */
+	@Query("select d.alertId, d.status, count(d) from AlertDelivery d where d.alertId in :alertIds"
+			+ " group by d.alertId, d.status")
+	List<Object[]> countByAlertAndStatus(java.util.Collection<UUID> alertIds);
+
 	@Query("select d from AlertDelivery d where d.status in (com.gajamitra.alert.AlertDelivery.Status.PENDING,"
 			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED) and d.subscriberId is not null and d.attempts < "
 			+ MAX_ATTEMPTS

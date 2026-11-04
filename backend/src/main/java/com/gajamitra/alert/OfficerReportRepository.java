@@ -9,4 +9,6 @@ interface OfficerReportRepository extends JpaRepository<OfficerReport, UUID> {
 
 	Optional<OfficerReport> findByIdempotencyKey(String idempotencyKey);
 
+	Optional<OfficerReport> findByAnalysisId(UUID analysisId);
+
 }
