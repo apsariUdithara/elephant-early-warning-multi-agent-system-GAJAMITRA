@@ -1,10 +1,10 @@
 {
-  "_doc": "Single source of truth for the alert guardrail. Read by ai-service/gajamitra/policy.py and by the Spring Boot re-check. See docs/IMPLEMENTATION_PLAN.md, Phase 2 step 5.",
+  "_doc": "Single source of truth for the alert guardrail. Read by ai-service/gajamitra/policy.py and by the Spring Boot re-check. See docs/IMPLEMENTATION_PLAN.md, Phase 2 step 5. send_now_severity is the exact level sent at once (the guard raises or lowers proposals to it); escalation_severity is the level a proposed escalation is sent at, held for approval when hold_escalation is true and the site requires approval; max_severity is the highest level any alert may have.",
   "severity_order": ["advisory", "warning", "danger"],
   "risk": {
-    "low":      {"max_severity": null,      "officer_report": false, "send_now_cap": null,      "hold_escalation": false},
-    "medium":   {"max_severity": "warning", "officer_report": false, "send_now_cap": "warning", "hold_escalation": false},
-    "high":     {"max_severity": "danger",  "officer_report": true,  "send_now_cap": "warning", "hold_escalation": true},
-    "critical": {"max_severity": "danger",  "officer_report": true,  "send_now_cap": "danger",  "hold_escalation": false}
+    "low":      {"max_severity": null,      "send_now_severity": null,      "escalation_severity": null,     "officer_report": false, "hold_escalation": false},
+    "medium":   {"max_severity": "warning", "send_now_severity": "warning", "escalation_severity": null,     "officer_report": false, "hold_escalation": false},
+    "high":     {"max_severity": "danger",  "send_now_severity": "warning", "escalation_severity": "danger", "officer_report": true,  "hold_escalation": true},
+    "critical": {"max_severity": "danger",  "send_now_severity": "danger",  "escalation_severity": null,     "officer_report": true,  "hold_escalation": false}
   }
 }

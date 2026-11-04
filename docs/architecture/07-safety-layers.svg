@@ -15,7 +15,7 @@
   </defs>
   <rect width="1300" height="560" fill="#ffffff"/>
   <text class="title" x="40" y="44">GajaMitra · Safety layers (defence in depth)</text>
-  <text class="sub" x="40" y="68">An agent's proposal passes six layers before it reaches a phone. Each layer can only lower, hold or deduplicate an alert, with one exception: a timeout sends.</text>
+  <text class="sub" x="40" y="68">An agent's proposal passes six layers before it reaches a phone. Only deterministic code raises an alert (to the tracker's level, or a template when the model is silent); a timeout sends.</text>
 
   <!-- card 1 -->
   <rect class="det" x="35" y="100" width="190" height="320" rx="12"/>
@@ -53,13 +53,13 @@
   <text class="h" x="499" y="131">Policy guard</text>
   <text class="w" x="467" y="160">policy.py · deterministic</text>
   <text class="k" x="467" y="192">STOPS</text>
-  <text class="s" x="467" y="212">Any severity above what</text>
-  <text class="s" x="467" y="230">the tracker's risk allows</text>
+  <text class="s" x="467" y="212">A severity that doesn't</text>
+  <text class="s" x="467" y="230">match the tracker's risk</text>
   <text class="k" x="467" y="264">HOW</text>
-  <text class="s" x="467" y="284">Caps by policy_table.json;</text>
-  <text class="s" x="467" y="302">splits send_now from the</text>
-  <text class="s" x="467" y="320">held escalation; records</text>
-  <text class="s" x="467" y="338">every downgrade</text>
+  <text class="s" x="467" y="284">Sets the level from the</text>
+  <text class="s" x="467" y="302">table; template if silent;</text>
+  <text class="s" x="467" y="320">splits now / held; notes</text>
+  <text class="s" x="467" y="338">every change</text>
   <text class="inv" x="467" y="400">Shared table with Java</text>
 
   <!-- card 4 -->
@@ -116,6 +116,6 @@
   <path class="line" d="M1057,260 H1075" marker-end="url(#a)"/>
 
   <rect x="35" y="450" width="1230" height="74" rx="10" fill="#f8fafc" stroke="#cbd2d9"/>
-  <text class="s" x="55" y="478">Why layers: the LLMs (2) are the only non-deterministic part. Layers 3 and 4 are plain code that cap them to the tracker's evidence.</text>
+  <text class="s" x="55" y="478">Why layers: the LLMs (2) are the only non-deterministic part. Layers 3 and 4 are plain code that hold them to the tracker's evidence.</text>
   <text class="s" x="55" y="500">Layer 5 adds human judgement without ever delaying a warning, and layer 6 makes retries safe.</text>
 </svg>

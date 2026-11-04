@@ -21,9 +21,10 @@ You are editing code that decides whether villagers are warned. The 12 safety in
 | `ai-service/gajamitra/track.py` | Risk level (`assess`), parsing of SAM output (`parse_sam`), calibration constants | exists |
 | `ai-service/gajamitra/perception.py` | What the tracker sees (SAM call, keyframes) | exists |
 | `ai-service/gajamitra/agent.py` | Prototype only: the LLM calls tools directly with no guard. Do not extend this pattern; the graph replaces it | exists, to be replaced |
-| `policy/policy_table.json` | Risk → maximum severity, officer report, what is held for approval | exists, not read yet |
-| `ai-service/gajamitra/policy.py` | Applies the table to a proposal (`send_now` / `escalation` split) | planned (plan Phase 2) |
-| `ai-service/gajamitra/graph.py`, `prompts.py`, `schemas.py` | Agent flow, prompts, structured output models | planned (plan Phase 2) |
+| `policy/policy_table.json` | Risk → exact level sent now, escalation level, maximum, officer report, what is held | exists, read by `policy.py` |
+| `ai-service/gajamitra/policy.py` | Applies the table to a proposal: level, template fallback, officer report, `send_now` / `escalation` split | exists (GM-3) |
+| `ai-service/gajamitra/schemas.py` | Proposal, alert, report and guard-decision models (strict, reject unknown fields) | exists (GM-3) |
+| `ai-service/gajamitra/graph.py`, `prompts.py` | Agent flow and prompts | planned (plan Phase 2) |
 
 ## Before changing any of these files
 

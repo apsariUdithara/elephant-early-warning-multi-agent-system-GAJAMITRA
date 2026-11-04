@@ -48,7 +48,7 @@ Spring Boot owns the product and every side effect. The Python worker owns perce
 ![Containers](docs/architecture/02-containers.svg)
 
 ### Agent pipeline
-The agents only propose. A deterministic guard caps their proposal to the tracker's evidence, and a wildlife officer approves escalations.
+The agents only propose. A deterministic guard sets their proposal to the level the tracker's evidence allows, and a wildlife officer approves escalations.
 
 ![Agent pipeline](docs/architecture/03-agent-graph.svg)
 
