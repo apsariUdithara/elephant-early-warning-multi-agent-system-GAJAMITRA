@@ -106,7 +106,7 @@
 
   <rect class="note" x="680" y="440" width="580" height="60" rx="8"/>
   <text class="s" x="696" y="464">Muse Spark 1.3 · separate prompt · same evidence</text>
-  <text class="s" x="696" y="484">Verdict {approve | revise | reject, reasons, suggested_severity}</text>
+  <text class="s" x="696" y="484">Verdict {approve | revise | reject, reasons, aggression}; failure = reject</text>
 
   <!-- policy table -->
   <rect class="note" x="680" y="515" width="580" height="117" rx="8"/>

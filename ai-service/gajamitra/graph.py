@@ -4,35 +4,47 @@ perceive -> load_context -> responder <-> verifier -> policy_guard -> dispatch_n
          -> dispatch_escalation -> finish
 
 Agents propose; the policy guard decides; every side effect goes through the ToolClient port with an
-idempotency key. One graph run per analysis; the thread id is the analysis id, so an interrupted run
-(waiting for officer approval) resumes from its checkpoint instead of starting again (invariant 6).
+idempotency key, and a side effect that isn't accepted fails the run loudly (invariants 3, 10). One graph run per
+analysis; the thread id is the analysis id, so a redelivered or interrupted run continues from its checkpoint
+instead of starting again (invariant 6).
 """
 import json
 import logging
 import operator
+import time
 from typing import Annotated, Any, TypedDict
 
 import cv2
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
-from openai import OpenAIError
 from pydantic import ValidationError
 
 from gajamitra.agent import propose
 from gajamitra.perception import keyframes, segment_video
 from gajamitra.policy import guard
+from gajamitra.ports import ACCEPTED, ModelUnavailable, alert_key
 from gajamitra.prompts import VERIFIER
 from gajamitra.schemas import GuardDecision, Proposal, ResponderOutput, Verdict
 from gajamitra.track import assess
 
 # How many times the verifier may send the proposal back to the responder before the guard decides.
 MAX_REVISIONS = 2
+# Longest the models may take, from the first responder call. After it, the guard decides with what it has
+# (a template if nothing valid arrived), so a slow model can't hold back the warning (invariant 2).
+MODEL_DEADLINE_S = 180.0
 APPROVAL_ANSWERS = ("approve", "reject", "timeout")
 
 log = logging.getLogger("gajamitra.graph")
 
 
+class DispatchFailed(RuntimeError):
+    """Spring didn't accept a side effect (for example no stored risk). The run fails visibly; it never ends as if
+    the warning went out."""
+
+
 class State(TypedDict, total=False):
+    # Plain dicts so the checkpointer can store them; every node re-validates what it reads with the
+    # Pydantic models (ResponderOutput, Verdict, GuardDecision).
     analysis_id: str
     site_id: str
     video_path: str
@@ -41,6 +53,7 @@ class State(TypedDict, total=False):
     keyframes: list[str]
     site: dict
     history: list[dict]
+    models_started: float
     responder: dict | None
     verdict: dict | None
     revisions: int
@@ -68,58 +81,84 @@ def parse_verdict(text):
     return Verdict.model_validate_json(body)
 
 
-def build_graph(tools, chat, checkpointer, perceive=perceive_clip):
-    """tools: ToolClient; chat: ChatModel (messages -> text); checkpointer: a LangGraph checkpointer."""
+def data_block(name, value):
+    """Model-written or stored text goes to the other model as clearly marked data, not as instructions."""
+    return f"<{name}>\n{json.dumps(value, ensure_ascii=False)}\n</{name}>"
+
+
+def require(result, what):
+    if result.get("status") not in ACCEPTED:
+        raise DispatchFailed(f"{what} was not accepted: {result.get('reason', result)}")
+    return result
+
+
+def build_graph(tools, chat, checkpointer, perceive=perceive_clip, clock=time.time):
+    """tools: ToolClient; chat: ChatModel (messages -> text, raises ModelUnavailable); checkpointer: LangGraph's."""
+
+    def out_of_time(state):
+        return clock() - state["models_started"] > MODEL_DEADLINE_S
 
     def perceive_node(state):
         summary, frames = perceive(state["video_path"], state["boundary"])
         # Spring stores the risk before any model runs, so its re-check can fail closed (invariant 3).
-        tools.record_assessment(state["analysis_id"], summary["risk"], summary)
+        result = tools.record_assessment(state["analysis_id"], summary["risk"], summary)
+        if result.get("status") != "recorded":
+            raise DispatchFailed(f"record_assessment was not accepted: {result.get('reason', result)}")
         return {"summary": summary, "keyframes": frames, "revisions": 0}
 
     def load_context(state):
         site = tools.get_site_procedures(state["site_id"])
-        return {"site": site, "history": tools.get_site_history(state["site_id"], 14)}
+        return {"site": site, "history": tools.get_site_history(state["site_id"], 14), "models_started": clock()}
 
     def responder(state):
-        context = [f"Site: {json.dumps(state['site'])}", f"Recent incidents (14 days): {json.dumps(state['history'])}"]
+        if out_of_time(state):
+            return {"notes": [f"models took longer than {MODEL_DEADLINE_S:.0f} s; the guard decides now"]}
+        context = [data_block("site", state["site"]), data_block("recent_incidents_14_days", state["history"])]
         if state.get("verdict") and state["verdict"]["decision"] == "revise":
-            context.append("A verifier sent your previous proposal back: " + "; ".join(state["verdict"]["reasons"]))
+            context.append("A verifier sent your previous proposal back. Its reasons:\n"
+                           + data_block("verifier_reasons", state["verdict"]["reasons"]))
         output, notes = propose(state["keyframes"], state["summary"], chat=chat, context="\n".join(context))
         return {"responder": output.model_dump() if output else None, "notes": notes}
 
     def verifier(state):
-        if state["responder"] is None:
+        if state.get("responder") is None:
             return {"verdict": Verdict(decision="reject", reasons=["no valid proposal"]).model_dump()}
+        if out_of_time(state):
+            return {"verdict": Verdict(decision="reject", reasons=["not verified in time"]).model_dump(),
+                    "notes": ["no time left to verify: unverified text isn't sent, the template is used"]}
         messages = [{"role": "system", "content": VERIFIER},
                     {"role": "user", "content": [
-                        {"type": "text", "text": f"Tracker summary:\n{json.dumps(state['summary'])}\n\n"
-                                                 f"Responder output:\n{json.dumps(state['responder'])}"}]
+                        {"type": "text", "text": data_block("tracker_summary", state["summary"]) + "\n"
+                                                 + data_block("responder_output", state["responder"])}]
                      + [{"type": "image_url", "image_url": {"url": u}} for u in state["keyframes"]]}]
         try:
             verdict = parse_verdict(chat(messages))
-        except (ValidationError, OpenAIError) as e:
-            # The verifier can only lower or hold; without it the guard still sets every level.
+        except (ValidationError, ModelUnavailable) as e:
+            # Decided with the user (GM-8): unverified text is never sent. The text checks catch form, not false
+            # content, so the guard sends its tracker-based template at the same level and time instead.
             log.warning("verifier unavailable: %s", e)
-            return {"verdict": Verdict(decision="approve", reasons=[]).model_dump(),
-                    "notes": [f"verifier unavailable ({type(e).__name__}); the guard still sets every level"]}
+            return {"verdict": Verdict(decision="reject", reasons=["verifier unavailable"]).model_dump(),
+                    "notes": [(f"verifier unavailable ({type(e).__name__}): the responder's unverified text is not "
+                               "sent; the template is used")]}
         revisions = state.get("revisions", 0) + (verdict.decision == "revise")
         notes = [f"verifier: {verdict.decision}" + (f" ({'; '.join(verdict.reasons)})" if verdict.reasons else "")]
         return {"verdict": verdict.model_dump(), "revisions": revisions, "notes": notes}
 
     def after_verifier(state):
-        if state["verdict"]["decision"] == "revise" and state["revisions"] <= MAX_REVISIONS:
+        if state["verdict"]["decision"] == "revise" and state["revisions"] <= MAX_REVISIONS and not out_of_time(state):
             return "responder"
         return "policy_guard"
 
     def policy_guard(state):
-        output = ResponderOutput.model_validate(state["responder"]) if state["responder"] else None
-        verdict = Verdict.model_validate(state["verdict"])
-        proposal = output.proposal if output and verdict.decision != "reject" else Proposal()
+        output = ResponderOutput.model_validate(state["responder"]) if state.get("responder") else None
+        verdict = Verdict.model_validate(state["verdict"]) if state.get("verdict") else Verdict(decision="approve")
+        rejected = verdict.decision == "reject"
+        proposal = output.proposal if output and not rejected else Proposal()
         notes = []
         if verdict.decision == "revise":
             notes.append(f"verifier still asked for changes after {MAX_REVISIONS} revisions; the guard decides")
-        aggression = verdict.aggression or bool(output and output.assessment.behaviour == "aggressive")
+        # A rejected responder's claims (including "aggressive") are not evidence; the verifier's flag still counts.
+        aggression = verdict.aggression or bool(output and not rejected and output.assessment.behaviour == "aggressive")
         site = state["site"]
         decision = guard(state["summary"], proposal, requires_approval=bool(site.get("requires_approval", True)),
                          aggression=aggression, place=site.get("name"))
@@ -127,11 +166,16 @@ def build_graph(tools, chat, checkpointer, perceive=perceive_clip):
 
     def dispatch_now(state):
         decision, aid = GuardDecision.model_validate(state["decision"]), state["analysis_id"]
-        sent = [{"stage": "now", "key": f"{aid}:now:{i}", "severity": a.severity,
-                 "result": tools.send_village_alert(aid, f"{aid}:now:{i}", a)} for i, a in enumerate(decision.send_now)]
+        sent = []
+        for i, alert in enumerate(decision.send_now):
+            key = alert_key(aid, "NOW", i)
+            sent.append({"stage": "now", "key": key, "severity": alert.severity,
+                         "result": require(tools.send_village_alert(aid, key, "NOW", alert), f"alert {key}")})
         if decision.officer_report:
-            sent.append({"stage": "now", "key": f"{aid}:now:report", "severity": "officer",
-                         "result": tools.notify_wildlife_officer(aid, f"{aid}:now:report", decision.officer_report)})
+            key = alert_key(aid, "NOW", "report")
+            sent.append({"stage": "now", "key": key, "severity": "officer",
+                         "result": require(tools.notify_wildlife_officer(aid, key, decision.officer_report),
+                                           f"officer report {key}")})
         return {"dispatched": sent}
 
     def after_dispatch_now(state):
@@ -154,9 +198,12 @@ def build_graph(tools, chat, checkpointer, perceive=perceive_clip):
 
     def dispatch_escalation(state):
         decision, aid = GuardDecision.model_validate(state["decision"]), state["analysis_id"]
-        return {"dispatched": [{"stage": "escalation", "key": f"{aid}:escalation:{i}", "severity": a.severity,
-                                "result": tools.send_village_alert(aid, f"{aid}:escalation:{i}", a)}
-                               for i, a in enumerate(decision.escalation)]}
+        sent = []
+        for i, alert in enumerate(decision.escalation):
+            key = alert_key(aid, "ESCALATION", i)
+            sent.append({"stage": "escalation", "key": key, "severity": alert.severity,
+                         "result": require(tools.send_village_alert(aid, key, "ESCALATION", alert), f"alert {key}")})
+        return {"dispatched": sent}
 
     def finish(state):
         return {}
@@ -186,7 +233,14 @@ def config(analysis_id):
 
 
 def start(graph, analysis_id, site_id, video_path, boundary) -> dict[str, Any]:
-    """Run until finished or until the approval gate waits. An interrupted result has an '__interrupt__' key."""
+    """Run until finished or until the approval gate waits ('__interrupt__' in the result).
+
+    A redelivered job for an analysis that already has a checkpoint continues from it (or returns the finished
+    state) instead of starting again, so SAM, the models and the side effects don't run twice (invariant 6).
+    """
+    snapshot = graph.get_state(config(analysis_id))
+    if snapshot.values:
+        return graph.invoke(None, config(analysis_id)) if snapshot.next else snapshot.values
     return graph.invoke({"analysis_id": analysis_id, "site_id": site_id, "video_path": video_path,
                          "boundary": list(boundary)}, config(analysis_id))
 
@@ -194,4 +248,3 @@ def start(graph, analysis_id, site_id, video_path, boundary) -> dict[str, Any]:
 def resume(graph, analysis_id, decision) -> dict[str, Any]:
     """Continue a run waiting at the approval gate with 'approve', 'reject' or 'timeout'."""
     return graph.invoke(Command(resume={"decision": decision}), config(analysis_id))
-

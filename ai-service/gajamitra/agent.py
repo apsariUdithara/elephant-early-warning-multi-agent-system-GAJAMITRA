@@ -12,11 +12,15 @@ from pydantic import ValidationError
 
 from gajamitra.perception import keyframes, meta, segment_video
 from gajamitra.policy import guard
+from gajamitra.ports import ModelUnavailable
 from gajamitra.prompts import RESPONDER
 from gajamitra.schemas import Proposal, ResponderOutput
 from gajamitra.track import assess
 
 SPARK = "muse-spark-1.3"
+# One Muse Spark call: never longer than this, with at most one retry. A failure becomes ModelUnavailable.
+SPARK_TIMEOUT_S = 60.0
+SPARK_MAX_RETRIES = 1
 # The prototype has no officer approval screen yet (Spring Boot, plan Phase 3), so nothing is held: a high-risk
 # escalation is shown as sent right after the warning.
 PROTOTYPE_REQUIRES_APPROVAL = False
@@ -27,8 +31,13 @@ log = logging.getLogger("gajamitra.agent")
 
 
 def meta_chat(messages):
-    """ChatModel port backed by Muse Spark on the Meta Model API: messages -> reply text."""
-    return meta().chat.completions.create(model=SPARK, messages=messages).choices[0].message.content
+    """ChatModel adapter for Muse Spark on the Meta Model API: messages -> reply text, or ModelUnavailable.
+    The only place that knows about the OpenAI SDK's errors."""
+    try:
+        client = meta().with_options(timeout=SPARK_TIMEOUT_S, max_retries=SPARK_MAX_RETRIES)
+        return client.chat.completions.create(model=SPARK, messages=messages).choices[0].message.content
+    except OpenAIError as e:
+        raise ModelUnavailable(f"{type(e).__name__}: {e}") from e
 
 
 def parse_responder(text):
@@ -54,9 +63,9 @@ def propose(images, summary, chat=None, context=""):
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             text = chat(messages)
-        except OpenAIError as e:
+        except ModelUnavailable as e:
             log.error("responder call failed: %s", e)
-            notes.append(f"responder call failed ({type(e).__name__}); the guard decides without a proposal")
+            notes.append("responder call failed (model unavailable); the guard decides without a proposal")
             return None, notes
         try:
             return parse_responder(text), notes

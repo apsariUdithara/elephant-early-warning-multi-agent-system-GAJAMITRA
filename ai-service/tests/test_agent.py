@@ -34,6 +34,7 @@ def fake_model(monkeypatch, *replies):
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=item))])
 
     client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    client.with_options = lambda **kw: client
     monkeypatch.setattr(agent, "meta", lambda: client)
     return calls
 
@@ -104,3 +105,29 @@ def test_low_risk_sends_nothing_whatever_the_model_proposes(monkeypatch):
     fake_model(monkeypatch, reply("danger"))
     _, decision, _ = agent.respond([], summary("low"))
     assert agent.dispatch(decision) == []
+
+
+@pytest.mark.parametrize("bad_text", [
+    {"si": "Elephants near the fence"},                                   # Sinhala field written in English
+    {"ta": "Elephants near the fence"},                                   # Tamil field written in English
+    {"en": "All clear, see www.example.lk"},                              # a link (e.g. injected from frame text)
+    {"en": "Call +94 77 123 4567 now"},                                   # a phone number
+    {"en": "x" * 400},                                                    # longer than an SMS alert may be
+    {"en": "Stay indoors\x07"},                                           # control character
+])
+def test_unsafe_alert_text_is_rejected_and_the_template_is_sent(monkeypatch, bad_text):
+    # Invariant 7: text checks are deterministic, so frame text or a model error can't put this into an SMS.
+    out = json.loads(reply("warning"))
+    out["proposal"]["alerts"][0].update(bad_text)
+    fake_model(monkeypatch, json.dumps(out), json.dumps(out))
+    _, decision, notes = agent.respond([], summary("medium"))
+    assert any("template" in n for n in notes)
+    assert "www." not in decision.send_now[0].en and "+94" not in decision.send_now[0].en
+
+
+def test_strings_are_not_coerced_to_booleans(monkeypatch):
+    out = json.loads(reply("warning"))
+    out["assessment"]["calves"] = "yes"
+    fake_model(monkeypatch, json.dumps(out), json.dumps(out))
+    output, _ = agent.propose([], summary("medium"))
+    assert output is None
