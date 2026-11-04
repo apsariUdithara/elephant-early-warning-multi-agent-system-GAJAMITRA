@@ -17,6 +17,11 @@ public interface AnalysisRepository extends JpaRepository<Analysis, UUID> {
 	@Query("select a from Analysis a where a.id = :id")
 	Optional<Analysis> lockById(UUID id);
 
+	List<Analysis> findByStatusAndCreatedAtBefore(Analysis.Status status, Instant before,
+			org.springframework.data.domain.Limit limit);
+
+	long countByStatusInAndUpdatedAtBefore(java.util.Collection<Analysis.Status> statuses, Instant before);
+
 	/** Recent assessed analyses at a site, newest first (episodic memory for the agents). Bounded to 50. */
 	List<Analysis> findTop50BySiteIdAndRiskNotNullAndCreatedAtAfterOrderByCreatedAtDesc(UUID siteId, Instant after);
 

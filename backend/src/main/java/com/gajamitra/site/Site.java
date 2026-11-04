@@ -37,6 +37,9 @@ public class Site {
 	@Column(name = "requires_approval", nullable = false)
 	private boolean requiresApproval;
 
+	@Column(name = "approval_timeout_s", nullable = false)
+	private int approvalTimeoutS;
+
 	protected Site() {
 	}
 
@@ -63,6 +66,11 @@ public class Site {
 
 	public boolean requiresApproval() {
 		return requiresApproval;
+	}
+
+	/** How long an escalation waits for the officer before it is sent anyway (invariant 9). */
+	public java.time.Duration approvalTimeout() {
+		return java.time.Duration.ofSeconds(approvalTimeoutS);
 	}
 
 }
