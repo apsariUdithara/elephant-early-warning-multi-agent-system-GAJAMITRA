@@ -85,6 +85,16 @@ class ApiTests {
 	}
 
 	@Test
+	void meTellsTheDashboardWhoIsSignedInAndNobodyAnswers401() throws Exception {
+		mvc.perform(get("/api/me")).andExpect(status().isUnauthorized());
+		mvc.perform(get("/api/me").with(user(officer).roles("OFFICER")))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.username").value(officer))
+			.andExpect(jsonPath("$.role").value("OFFICER"));
+		mvc.perform(get("/api/me").with(user("deleted-user").roles("OFFICER"))).andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	void writesNeedTheCsrfToken() throws Exception {
 		mvc.perform(multipart("/api/analyses").file(video(MP4)).param("siteId", site.toString())
 			.param("boundary", "0,0.5,1,0.5,0.5,0.9").with(user(officer).roles("OFFICER")))

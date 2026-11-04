@@ -162,3 +162,62 @@ body {
   padding: 0;
   list-style: none;
 }
+
+/* App shell, navigation, forms and list states (GM-27). Semantic tokens only; errors use the non-risk accent. */
+.app-nav { display: flex; flex: 1 1 auto; gap: var(--space-2); }
+.app-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  color: var(--cloud-white);
+  text-decoration: none;
+}
+.app-nav a[aria-current="page"] { background: rgb(255 255 255 / 0.14); font-weight: 700; text-decoration: underline; }
+.app-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.muted-on-dark { color: var(--slate-300); }
+.lang-switch { display: flex; gap: var(--space-1); }
+
+.button:disabled { opacity: 0.6; cursor: not-allowed; }
+.button-quiet { background: transparent; color: inherit; border-color: currentColor; }
+.button-quiet[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+
+.login { display: grid; place-content: center; gap: var(--space-4); min-height: 100vh; padding: var(--space-4); }
+.login-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.login-form { display: grid; gap: var(--space-4); width: min(24rem, 100%); }
+.login-form h1, .login-form h2 { margin: 0; }
+label { display: grid; gap: var(--space-1); font-weight: 600; }
+input {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.form-error, .state-error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: 4px solid var(--terracotta);
+  background: var(--surface);
+  font-weight: 600;
+}
+.state-error p { margin: 0 0 var(--space-3); }
+
+.analysis-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.analysis-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.analysis-status { min-width: min(10rem, 100%); font-weight: 700; overflow-wrap: anywhere; }
+.lang-switch .button { min-width: 44px; }
+.analysis-time { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
