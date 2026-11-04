@@ -37,6 +37,9 @@ public class AlertDelivery {
 	@Column(name = "provider_id")
 	private String providerId;
 
+	@Column(nullable = false)
+	private int attempts;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
@@ -65,6 +68,10 @@ public class AlertDelivery {
 
 	public UUID id() {
 		return id;
+	}
+
+	public UUID alertId() {
+		return alertId;
 	}
 
 }

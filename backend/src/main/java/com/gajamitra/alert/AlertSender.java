@@ -55,7 +55,8 @@ class AlertSender {
 		}
 	}
 
-	private void deliver(Alert alert, AlertDelivery delivery) {
+	/** Claim, send and record one delivery. Used after commit and by {@link DeliveryRetryJob}. */
+	void deliver(Alert alert, AlertDelivery delivery) {
 		try {
 			Subscriber to = subscribers.findById(delivery.subscriberId()).orElse(null);
 			if (to == null || deliveries.claim(delivery.id()) == 0) {

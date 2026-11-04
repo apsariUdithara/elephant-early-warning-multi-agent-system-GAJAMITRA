@@ -1,8 +1,10 @@
 package com.gajamitra.alert;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,17 +12,30 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Status changes are conditional updates, each committed on its own: PENDING -> SENDING (claim) before the provider is
- * called, then SENDING -> SENT or FAILED. Only the caller whose claim succeeded sends, so no one is texted twice.
+ * Status changes are conditional updates, each committed on its own: PENDING or FAILED -> SENDING (claim) before the
+ * provider is called, then SENDING -> SENT or FAILED. Only the caller whose claim succeeded sends, so no one is texted
+ * twice; a row left in SENDING means "maybe sent" and is never claimed again.
  */
 interface AlertDeliveryRepository extends JpaRepository<AlertDelivery, UUID> {
 
+	/** Provider calls per delivery, the first one included. */
+	int MAX_ATTEMPTS = 3;
+
 	List<AlertDelivery> findByAlertIdAndStatus(UUID alertId, AlertDelivery.Status status);
+
+	@Query("select d from AlertDelivery d where d.status in (com.gajamitra.alert.AlertDelivery.Status.PENDING,"
+			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED) and d.attempts < " + MAX_ATTEMPTS
+			+ " and d.updatedAt < :before order by d.updatedAt")
+	List<AlertDelivery> findRetryable(Instant before, Limit limit);
+
+	long countByStatusAndUpdatedAtBefore(AlertDelivery.Status status, Instant before);
 
 	@Modifying
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	@Query("update AlertDelivery d set d.status = com.gajamitra.alert.AlertDelivery.Status.SENDING, d.updatedAt = CURRENT_TIMESTAMP"
-			+ " where d.id = :id and d.status = com.gajamitra.alert.AlertDelivery.Status.PENDING")
+	@Query("update AlertDelivery d set d.status = com.gajamitra.alert.AlertDelivery.Status.SENDING,"
+			+ " d.attempts = d.attempts + 1, d.updatedAt = CURRENT_TIMESTAMP where d.id = :id and d.attempts < "
+			+ MAX_ATTEMPTS + " and d.status in (com.gajamitra.alert.AlertDelivery.Status.PENDING,"
+			+ " com.gajamitra.alert.AlertDelivery.Status.FAILED)")
 	int claim(UUID id);
 
 	@Modifying
