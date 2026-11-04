@@ -32,7 +32,11 @@ export default function Login() {
     setPending(true)
     setFailure(null)
     try {
-      await login(username, password)
+      const next = await login(username, password)
+      // The password was accepted but the page still cannot tell who is signed in (for example an outdated backend):
+      // say so instead of silently staying on this form.
+      if (next.status === 'unreachable') setFailure('login.unreachable')
+      else if (next.status === 'anonymous') setFailure('login.error')
     } catch (error) {
       setFailure(failureKey(error))
     } finally {

@@ -10,8 +10,11 @@ export type Session =
 
 export interface Auth {
   session: Session
-  /** Throws ApiError: 401 wrong credentials, 429 locked, 0 server unreachable. */
-  login: (username: string, password: string) => Promise<void>
+  /**
+   * Throws ApiError: 401 wrong credentials, 429 locked, 0 server unreachable. Otherwise answers the session the server
+   * reports after the sign-in, which is not always "signed in" (for example when the answer to "who am I" fails).
+   */
+  login: (username: string, password: string) => Promise<Session>
   logout: () => Promise<void>
   retry: () => Promise<void>
 }
