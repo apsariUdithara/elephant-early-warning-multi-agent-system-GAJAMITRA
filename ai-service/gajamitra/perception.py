@@ -10,6 +10,9 @@ from gajamitra.track import SamOutputError, parse_sam
 
 # Stream events that end a response; only "response.completed" means the boxes are complete.
 TERMINAL_EVENTS = ("response.completed", "response.failed", "response.incomplete", "error")
+# Longest wait for one SAM 3.1 request (upload or stream). A timeout becomes a PerceptionError, never "no elephants".
+# Keep it below RabbitMQ's consumer_timeout once the worker exists (plan Phase 4).
+SAM_TIMEOUT_S = 300.0
 
 
 class PerceptionError(RuntimeError):
@@ -29,11 +32,12 @@ def segment_video(path, concept="elephant"):
     so a perception failure can never be reported as "no elephants" (safety invariant 1).
     """
     chunks, final = [], None
+    client = meta().with_options(timeout=SAM_TIMEOUT_S)
     try:
         with open(path, "rb") as f:
-            file = meta().files.create(file=f, purpose="user_data")
+            file = client.files.create(file=f, purpose="user_data")
         # Request shape follows meta-model-cookbook 07_sam/01_api_basics/python/02_upload_and_segment_video.py.
-        with meta().responses.stream(model="sam-3.1", input=[{"type": "message", "role": "user", "content": [
+        with client.responses.stream(model="sam-3.1", input=[{"type": "message", "role": "user", "content": [
                 {"type": "input_text", "text": concept},
                 {"type": "input_file", "file_id": file.id}]}]) as stream:
             for event in stream:
