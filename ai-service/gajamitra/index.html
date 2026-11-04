@@ -91,17 +91,21 @@ function render() {
   const elephants = s.elephants.map(e => `<div>#${e.id}: ${e.dist_px <= 0 ? "<b>inside village side</b>"
     : e.eta_s != null ? `approaching, ETA <b>${e.eta_s}s</b>` : e.near ? "<b>close to the boundary</b>, not moving in"
     : "not approaching"}</div>`).join("");
+  const STATUS = { simulated: "shown here; SMS arrives with the backend", held_for_approval: "held for officer approval" };
   const actions = result.actions.map(x => {
-    const g = x.args;
-    if (x.tool === "send_village_alert") return `<div class="action"><b>Village alert (${esc(g.severity)})</b><div>${esc(g.english)}</div>
-      <div class="lang">සිංහල: ${esc(g.sinhala)}</div><div class="lang">தமிழ்: ${esc(g.tamil)}</div></div>`;
-    return `<div class="action"><b>Wildlife officer notified</b><div>${esc(g.report)}</div></div>`;
+    const g = x.args, when = x.stage === "escalation" ? "Escalation" : "Sent now", status = esc(STATUS[x.result.status] || x.result.status);
+    if (x.tool === "send_village_alert") return `<div class="action"><b>${when}: village alert (${esc(g.severity)})</b>
+      <div>${esc(g.en)}</div><div class="lang">සිංහල: ${esc(g.si)}</div><div class="lang">தமிழ்: ${esc(g.ta)}</div>
+      <div class="lang">${status}</div></div>`;
+    return `<div class="action"><b>Wildlife officer notified</b><div>${esc(g.report)}</div><div class="lang">${status}</div></div>`;
   }).join("") || '<p class="lang">No action needed.</p>';
+  const notes = (result.notes || []).map(n => `<li>${esc(n)}</li>`).join("");
   $("panel").innerHTML = `
     <span class="risk" style="background:${RISK[s.risk]}">${esc(s.risk)} risk</span>
     <div class="card"><h3>Herd</h3>${s.herd_size} elephant(s)${a.calves ? ", calves present" : ""}${elephants}</div>
     <div class="card"><h3>Behaviour (Muse Spark)</h3><b>${esc(a.behaviour || "unknown")}</b><div>${esc(a.reasoning)}</div></div>
-    <div class="card"><h3>Agent actions</h3>${actions}</div>`;
+    <div class="card"><h3>Decided by the policy guard</h3>${actions}</div>
+    ${notes ? `<div class="card"><h3>Guard notes</h3><ul class="lang">${notes}</ul></div>` : ""}`;
 }
 
 function draw() {

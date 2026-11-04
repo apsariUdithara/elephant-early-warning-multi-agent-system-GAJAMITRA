@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GajaMitra</title>
+    <script>
+      // Theme before first paint (no flash): saved choice, else the system preference. Same rules as src/theme.ts.
+      ;(function () {
+        var theme = null
+        try { theme = localStorage.getItem('gajamitra.theme') } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

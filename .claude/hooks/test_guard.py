@@ -164,6 +164,75 @@ def test_guard():
         assert p.returncode == 1
 
 
+def shell(tool, cmd):
+    return {"tool_name": tool, "tool_input": {"command": cmd}}
+
+
+def test_powershell_gets_the_same_protection_as_bash():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = make_repo(tmp)
+        sh(root, "switch", "-q", "-c", "feat/GM-1-x")
+        same = {
+            "git push origin main": "deny",
+            "git push --force origin feat/GM-1-x": "deny",
+            "gh pr merge 3": "deny",
+            "git tag v1.0.0": "deny",
+            'git commit -m "Add stuff"': "deny",
+            'git config user.email a@b.c': "deny",
+            "git reset --hard HEAD~1": "ask",
+            'git commit -m "feat: add x"': "allow",
+            "git status": "allow",
+        }
+        for tool in ("Bash", "PowerShell"):
+            for cmd, want in same.items():
+                got = run(shell(tool, cmd), root)
+                assert got == want, f"{tool} {cmd!r}: expected {want}, got {got}"
+        powershell_only = {
+            "Remove-Item -Recurse -Force backend\\target": "ask",
+            "rm -r -fo frontend\\dist": "ask",
+            "Remove-Item -Recurse scratch\\tmp": "allow",
+            "Remove-Item scratch\\one-file.txt": "allow",
+        }
+        for cmd, want in powershell_only.items():
+            got = run(shell("PowerShell", cmd), root)
+            assert got == want, f"PowerShell {cmd!r}: expected {want}, got {got}"
+
+
+def test_shell_commands_cannot_read_env_files_or_print_secrets():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = make_repo(tmp)
+        blocked = [
+            # .env files, including paths, wildcards and copies
+            "cat .env", "type .env", "Get-Content .env", "gc .\\.env", "more < .env", "cat ./backend/.env.local",
+            "cat .en*", "cat .e?v", "cp .env /tmp/x", "Copy-Item .env backup.txt", "python -c \"print(open('.env').read())\"",
+            # secret environment variables
+            "echo $MODEL_API_KEY", "echo ${TWILIO_AUTH_TOKEN}", "echo $env:MODEL_API_KEY", "Write-Output $env:POSTGRES_PASSWORD",
+            "echo %MCP_API_KEY%", "printenv MODEL_API_KEY", "python -c \"import os; print(os.environ['MODEL_API_KEY'])\"",
+            "python -c \"import os; print(os.getenv('RELEASE_APP_PRIVATE_KEY'))\"", "node -e \"console.log(process.env.LANGFUSE_SECRET_KEY)\"",
+            "[Environment]::GetEnvironmentVariable('MODEL_API_KEY')",
+            # whole-environment dumps
+            "env", "printenv", "set", "export -p", "Get-ChildItem env:", "gci Env:", "dir env:",
+            "[Environment]::GetEnvironmentVariables()", "python -c \"import os; print(os.environ)\"",
+            # commands that can't be inspected
+            "powershell -EncodedCommand SQBuAHYAbwBrAGUA", "pwsh -enc SQBuAHYAbwBrAGUA",
+        ]
+        allowed = [
+            "cat .env.example", "Get-Content .env.example", "echo $HOME", "echo $env:PATH", "env FOO=1 npm test",
+            "set -e", "ls -la", "python -c \"import os; print(os.environ.get('HOME'))\"", "grep -n MODEL_API_KEY docs/x.md",
+            "sed -e s/aaaaaaaaaaaaaaaaaaaa/b/ file.txt", "ls .venv", "cat environment.yml",
+        ]
+        for tool in ("Bash", "PowerShell"):
+            for cmd in blocked:
+                assert run(shell(tool, cmd), root) == "deny", f"{tool} should block: {cmd}"
+            for cmd in allowed:
+                assert run(shell(tool, cmd), root) == "allow", f"{tool} should allow: {cmd}"
+        # Known limit, kept visible on purpose: a program that reads .env or the environment internally can't be
+        # seen from its command line. Pattern matching is one layer, not complete secret protection.
+        assert run(shell("Bash", "python scripts/some_tool.py"), root) == "allow"
+
+
 if __name__ == "__main__":
     test_guard()
+    test_powershell_gets_the_same_protection_as_bash()
+    test_shell_commands_cannot_read_env_files_or_print_secrets()
     print("ok")
