@@ -1,0 +1,3 @@
+Inter (variable, Latin subset) by The Inter Project Authors, SIL Open Font License 1.1.
+Source: https://github.com/rsms/inter (files from the @fontsource-variable/inter 5.1.0 package, copied here; it is not an npm dependency).
+Sinhala and Tamil use the system fonts Nirmala UI and Noto Sans Sinhala / Tamil (see --font in src/index.css).
