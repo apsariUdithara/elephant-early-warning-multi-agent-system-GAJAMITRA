@@ -11,7 +11,7 @@ COPY backend/src/ backend/src/
 RUN cd backend && ./mvnw -q -B -DskipTests package && cp target/*.jar /app.jar
 
 FROM eclipse-temurin:21-jre
-RUN useradd --system --uid 10001 gajamitra && mkdir -p /data/videos && chown gajamitra /data/videos
+RUN useradd --system --uid 10001 gajamitra && mkdir -p /data/videos /data/evidence && chown gajamitra /data/videos /data/evidence
 USER gajamitra
 COPY --from=build /app.jar /app/app.jar
 EXPOSE 8080

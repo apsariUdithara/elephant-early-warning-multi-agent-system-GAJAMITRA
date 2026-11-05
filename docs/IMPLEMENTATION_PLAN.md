@@ -607,3 +607,9 @@ sites → horizontal scaling of AI workers.
   `approval_timeout_s`).
 - **Evals**: `python -m evals.run` produces the metrics table; false alarms = 0 on negative cases.
 - **CI** green on push.
+
+### GM-32: evidence frames and eval runner
+
+The worker saves the frames the agents looked at to `EVIDENCE_DIR/{analysisId}/{n}.jpg` (best effort; a disk problem never delays the warning or the approval event). Spring serves them at `GET /api/analyses/{id}/frames/{n}` to signed-in users only (no-store) and deletes folders older than 30 days with the footage. The approvals list carries a `frames` count.
+
+Evals: `evals/cases.json` holds 15 labelled slots; only cases with a clip run, the rest are reported as skipped, never as passes. `evals/run.py --yes-spend-credits` prints counts such as "13/15"; `gajamitra/evals.py` also has an AI-judge (`judge_alert`) that scores location, count, instruction and brevity and rejects invalid scores. Footage is still needed for 13 of the 15 cases.

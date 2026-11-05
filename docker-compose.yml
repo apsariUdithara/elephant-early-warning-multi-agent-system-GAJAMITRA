@@ -43,13 +43,14 @@ services:
       GAJAMITRA_ADMIN_PASSWORD: ${GAJAMITRA_ADMIN_PASSWORD:-}
       GAJAMITRA_SECURE_COOKIES: ${GAJAMITRA_SECURE_COOKIES:-true}
       GAJAMITRA_VIDEO_DIR: /data/videos
+      GAJAMITRA_EVIDENCE_DIR: /data/evidence
       GAJAMITRA_SMS_ENABLED: ${GAJAMITRA_SMS_ENABLED:-false}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
     # Local only. Behind Caddy later, /mcp must stay unreachable from outside (plan Phase 3, Security).
     ports: ["127.0.0.1:8080:8080"]
-    volumes: [videos:/data/videos]
+    volumes: [videos:/data/videos, evidence:/data/evidence]  # evidence: Spring serves and purges the frames
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health"]
       interval: 5s
@@ -77,7 +78,7 @@ services:
       MCP_API_KEY: ${MCP_API_KEY}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
     # The worker reads the clips the backend stored (same path in both containers).
-    volumes: [videos:/data/videos:ro]
+    volumes: [videos:/data/videos:ro, evidence:/data/evidence]  # evidence: the worker saves the frames it looked at
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     # A crash loop stops after 5 tries instead of hammering the broker and the Meta API.
@@ -86,3 +87,4 @@ services:
 volumes:
   pgdata:
   videos:
+  evidence:

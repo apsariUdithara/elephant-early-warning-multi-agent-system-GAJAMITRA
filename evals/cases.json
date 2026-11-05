@@ -1,0 +1,18 @@
+[
+  {"id": "hurulu-critical", "clip": "scratch/footage/hurulu_15s.mp4", "boundary": [0, 0.62, 1, 0.62, 0.5, 0.95], "expected_risk": "critical", "note": "provisional: observed result"},
+  {"id": "hurulu-high", "clip": "scratch/footage/hurulu_15s.mp4", "boundary": [0, 0.8, 1, 0.8, 0.5, 0.98], "expected_risk": "high", "note": "provisional: observed result"},
+  {"id": "approaching-herd-1", "clip": "scratch/footage/assam_herd_15s.mp4", "boundary": [0, 0.35, 1, 0.35, 0.5, 0.98], "expected_risk": "high", "note": "herd with calves crossing a road toward the camera, villagers watching; a crossing, not a village approach: label predicted before running"},
+  {"id": "approaching-herd-2", "clip": "scratch/footage/river_approach_15s.mp4", "boundary": [0, 0.3, 1, 0.3, 0.5, 0.98], "expected_risk": "high", "note": "four elephants walking out of a river toward the camera and growing larger (inspected); label predicted before running"},
+  {"id": "approaching-herd-3", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "high"},
+  {"id": "calm-herd-1", "clip": "scratch/footage/kaziranga_1.mp4", "boundary": [0, 0.15, 1, 0.15, 0.5, 0.02], "expected_risk": "low", "note": "one calm elephant in a river, village far above: label predicted before running"},
+  {"id": "calm-herd-2", "clip": "scratch/footage/kaziranga_2.mp4", "boundary": [0, 0.15, 1, 0.15, 0.5, 0.02], "expected_risk": "low", "note": "one calm elephant in a river, village far above: label predicted before running"},
+  {"id": "calm-herd-3", "clip": "scratch/footage/pinnawala_bathing_15s.mp4", "boundary": [0, 0.05, 1, 0.05, 0.5, 0.0], "expected_risk": "low", "note": "bathing herd, village far above: label predicted before running"},
+  {"id": "at-boundary-1", "clip": "scratch/footage/pinnawala_15s.mp4", "boundary": [0, 0.5, 1, 0.5, 0.5, 0.95], "expected_risk": "critical", "note": "herd across the line on the village side: label predicted before running"},
+  {"id": "at-boundary-2", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "critical"},
+  {"id": "flipped-village-side-1", "clip": "scratch/footage/hurulu_15s.mp4", "boundary": [0, 0.62, 1, 0.62, 0.5, 0.05], "expected_risk": "medium", "note": "DERIVED from hurulu-critical with the village side reversed, not independent footage; label predicted (at least medium by the NEAR_BODIES floor)"},
+  {"id": "flipped-village-side-2", "clip": "scratch/footage/pinnawala_15s.mp4", "boundary": [0, 0.5, 1, 0.5, 0.5, 0.05], "expected_risk": "medium", "note": "DERIVED from at-boundary-1 with the village side reversed, not independent footage; label predicted"},
+  {"id": "no-elephants-1", "clip": "scratch/footage/paddy_terraces.mp4", "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low", "note": "aerial paddy terraces, no elephants (inspected)"},
+  {"id": "no-elephants-2", "clip": "scratch/footage/grass_field.mp4", "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low", "note": "grass in wind, no elephants (inspected)"},
+  {"id": "tabletop-toy", "clip": null, "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low", "note": "toy elephant must not alert"},
+  {"id": "no-elephants-road", "clip": "scratch/footage/empty_forest_road_15s.mp4", "boundary": [0, 0.5, 1, 0.5, 0.5, 0.9], "expected_risk": "low", "note": "empty forest road filmed from a car, no elephants in the sampled frames (inspected)"}
+]
