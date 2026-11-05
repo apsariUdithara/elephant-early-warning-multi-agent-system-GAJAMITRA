@@ -4,9 +4,9 @@
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#3e4c59"/></marker>
     <style>
       text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}
-      .title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#52606d}
-      .h{font-size:15px;font-weight:600}.s{font-size:12px;fill:#52606d}.xs{font-size:11px;fill:#52606d}
-      .lbl{font-size:11px;fill:#334e68;paint-order:stroke;stroke:#fff;stroke-width:4px}
+      .title{font-size:26px;font-weight:700}.sub{font-size:16px;fill:#52606d}
+      .h{font-size:18px;font-weight:600}.s{font-size:15px;fill:#52606d}.xs{font-size:14px;fill:#52606d}
+      .lbl{font-size:14px;fill:#334e68;paint-order:stroke;stroke:#fff;stroke-width:4px}
       .line{stroke:#3e4c59;stroke-width:1.6;fill:none}
       .vm{fill:#f8fafc;stroke:#334e68;stroke-width:1.5;stroke-dasharray:10 5}
       .px{fill:#f1f5f9;stroke:#475569;stroke-width:1.5}
@@ -32,13 +32,13 @@
 
   <rect class="px" x="330" y="300" width="160" height="70" rx="10"/>
   <text class="h" x="410" y="328" text-anchor="middle">caddy</text>
-  <text class="xs" x="410" y="350" text-anchor="middle">TLS · the only public port</text>
+  <text class="xs" x="410" y="350" text-anchor="middle">serves dashboard · TLS</text>
   <path class="line" d="M490,335 H525 V205 H560" marker-end="url(#a)"/>
-  <text class="lbl" x="530" y="275">/ and /api</text>
+  <text class="lbl" x="530" y="275">/api only</text>
 
   <rect class="sb" x="560" y="160" width="200" height="90" rx="10"/>
   <text class="h" x="660" y="188" text-anchor="middle">backend</text>
-  <text class="s" x="660" y="210" text-anchor="middle">Spring Boot + React build</text>
+  <text class="s" x="660" y="210" text-anchor="middle">Spring Boot</text>
   <text class="xs" x="660" y="230" text-anchor="middle">:8080 internal · /mcp internal</text>
 
   <rect class="py" x="560" y="470" width="200" height="90" rx="10"/>
@@ -50,15 +50,15 @@
 
   <rect class="inf" x="800" y="140" width="180" height="90" rx="10"/>
   <text class="h" x="890" y="166" text-anchor="middle">postgres</text>
-  <text class="xs" x="890" y="186" text-anchor="middle">:5432 internal · pgdata volume</text>
-  <text class="xs" x="890" y="204" text-anchor="middle">public: backend (Flyway)</text>
-  <text class="xs" x="890" y="220" text-anchor="middle">langgraph: ai-service</text>
+  <text class="xs" x="890" y="186" text-anchor="middle">pgdata volume</text>
+  <text class="xs" x="890" y="204" text-anchor="middle">schema public: backend</text>
+  <text class="xs" x="890" y="220" text-anchor="middle">schema langgraph: worker</text>
   <path class="line" d="M760,185 H800" marker-end="url(#a)"/>
 
   <rect class="inf" x="800" y="300" width="180" height="80" rx="10"/>
   <text class="h" x="890" y="328" text-anchor="middle">rabbitmq</text>
   <text class="xs" x="890" y="348" text-anchor="middle">:5672 AMQP internal</text>
-  <text class="xs" x="890" y="364" text-anchor="middle">:15672 UI (SSH tunnel only)</text>
+  <text class="xs" x="890" y="364" text-anchor="middle">:15672 UI (tunnel only)</text>
   <path class="line" d="M760,230 H780 V330 H800" marker-start="url(#a)" marker-end="url(#a)"/>
   <path class="line" d="M760,500 H785 V360 H800" marker-start="url(#a)" marker-end="url(#a)"/>
 
@@ -93,9 +93,9 @@
   <text class="h" x="46" y="466">GitHub (public repo)</text>
   <text class="s" x="46" y="490">Actions CI on every push:</text>
   <text class="xs" x="46" y="512">• ai-service: ruff + pytest</text>
-  <text class="xs" x="46" y="530">• backend: mvnw verify (Testcontainers)</text>
-  <text class="xs" x="46" y="548">• frontend: tsc + vite build</text>
-  <text class="xs" x="46" y="566">• evals: manual run (spends credits)</text>
+  <text class="xs" x="46" y="530">• backend: mvnw verify</text>
+  <text class="xs" x="46" y="548">• frontend: lint, test, build</text>
+  <text class="xs" x="46" y="566">• evals: manual only</text>
   <text class="s" x="46" y="596">Deploy: git pull, then</text>
   <text class="s" x="46" y="614">docker compose up -d --build</text>
 </svg>
