@@ -44,7 +44,7 @@ export default function AnalysesPage() {
       {state.status === 'ready' && state.data.length > 0 && (
         <ul className="analysis-list">
           {[...state.data].sort((x, y) => urgency(x) - urgency(y)).map((a) => (
-            <li key={a.id} className="analysis-row" data-urgent={urgency(a) < 3} data-risk={a.risk ?? undefined}>
+            <li key={a.id} className="analysis-row incident" data-urgent={urgency(a) < 3} data-risk={a.risk ?? undefined}>
               <Link className="analysis-status" data-status={a.status} to={`/analyses/${encodeURIComponent(a.id)}`}>
                 {t(`status.${a.status}`)}
               </Link>
