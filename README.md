@@ -20,12 +20,20 @@ Every year in Sri Lanka, hundreds of elephants and more than a hundred people di
 
 ## The dashboard
 
-Officers see what was sent, what is waiting for them, and the frames the agents looked at. Everything is available in English, Sinhala and Tamil, in light and dark themes. (Screenshots use mock data.)
+Screenshots from a real run of the app (the demo site is in test mode, so alerts are stored and no SMS is sent).
 
-<p>
-  <img src="docs/screenshots/approvals.png" alt="Approvals queue: the warning has been sent, the escalation waits for an officer with a countdown" width="49%">
-  <img src="docs/screenshots/analysis-sinhala.png" alt="An analysis page in Sinhala with the alerts in three languages" width="49%">
-</p>
+| | |
+|---|---|
+| ![New analysis: the officer marks the village boundary on the clip](docs/screenshots/new-analysis-boundary.jpg) | ![SAM 3.1 tracking: every elephant boxed with a stable ID](docs/screenshots/sam-tracking.jpg) |
+| **New analysis.** Choose a site, upload a clip, click two points on the boundary and one on the village side. | **Tracking.** SAM 3.1 boxes every elephant and keeps its ID across frames. |
+| ![Analysis: high risk, the warning sent in English, Sinhala and Tamil, and the officer report](docs/screenshots/analysis-alerts.jpg) | ![Approvals: the escalation, the frames the agents saw and the countdown](docs/screenshots/approvals.jpg) |
+| **Result.** Risk level, the warning in three languages, and the officer report with distance and arrival time. | **Approvals.** The warning has already gone out; the escalation waits for an officer and is sent automatically when time runs out. |
+| ![The whole interface in Sinhala](docs/screenshots/analysis-sinhala.jpg) | ![Sites and villagers: test or live mode and the approval rule](docs/screenshots/admin-sites.jpg) |
+| **Three languages.** The whole interface switches to Sinhala or Tamil. | **Admin.** Sites, villagers, test or live mode and the approval time limit. |
+
+**Light and dark themes.** The screens above use the dark theme; this is the analyses list in the light theme.
+
+<img src="docs/screenshots/analyses-light.jpg" alt="Analyses list in the light theme" width="60%">
 
 ## Architecture
 
