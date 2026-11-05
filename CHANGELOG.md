@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.18.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.17.0...v1.18.0) (2026-11-05)
+
+### Features
+
+* add the Caddy web door, serve the dashboard and keep the MCP endpoint private ([b45df78](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/b45df788e3c1e935d8031fbb5c0657927ab0db46))
+
 ## [1.17.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.16.0...v1.17.0) (2026-11-05)
 
 ### Features
