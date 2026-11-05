@@ -35,13 +35,20 @@ def run_case(case, chat, perceive_graph=None):
     sent = sorted({sev for _, sev in tools.deliveries if sev != "officer"})  # officer reports are not village alerts
     want = case["expected_risk"]
     return {"id": case["id"], "ok": risk == want and sent == expected_severities(want),
-            "risk": risk, "expected_risk": want, "sent": sent}
+            "risk": risk, "expected_risk": want, "sent": sent,
+            "texts": [a["en"] for a in (state.get("decision") or {}).get("send_now", [])]}
 
 
-def run_all(cases, chat):
+def run_all(cases, chat, judge=None):
     """Cases without a clip are skipped and counted separately, never counted as passes."""
     ready = [c for c in cases if c.get("clip")]
     results = [run_case(c, chat) for c in ready]
+    for r in results:  # the judge scores quality only; a judge failure never changes pass or fail
+        if judge and r.get("texts"):
+            try:
+                r["quality"] = [judge_alert(x, judge) for x in r["texts"]]
+            except (ValueError, KeyError, TypeError):
+                r["quality"] = "judge output rejected"
     return {"results": results, "passed": sum(r["ok"] for r in results), "ran": len(ready), "total": len(cases),
             "skipped": [c["id"] for c in cases if not c.get("clip")]}
 
@@ -49,6 +56,7 @@ def run_all(cases, chat):
 def report(summary):
     lines = [f"Passed {summary['passed']}/{summary['ran']} ({summary['total']} cases, {len(summary['skipped'])} without footage)"]
     lines += [f"  {'ok  ' if r['ok'] else 'FAIL'} {r['id']}: risk {r['risk']}, sent {r['sent']}{' ' + r['error'][:150] if 'error' in r else ''}" for r in summary["results"]]
+    lines += [f"  quality {r['id']}: {r['quality']}" for r in summary["results"] if r.get("quality")]
     lines += [f"  skip {i}: no clip yet" for i in summary["skipped"]]
     return "\n".join(lines)
 

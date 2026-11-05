@@ -35,3 +35,12 @@ def test_the_judge_rejects_scores_it_cannot_trust():
     for bad in ('{"location": 9, "count": 1, "instruction": 1, "brevity": 1}', "not json", "{}"):
         with pytest.raises(ValueError):
             evals.judge_alert("DANGER", lambda m, b=bad: b)
+
+
+def test_judge_scores_are_reported_and_a_bad_judge_never_changes_pass_or_fail(monkeypatch):
+    monkeypatch.setattr(evals, "run_case", lambda c, chat: {"id": c["id"], "ok": True, "risk": "high", "sent": [], "texts": ["DANGER"]})
+    good = json.dumps({"location": 5, "count": 5, "instruction": 5, "brevity": 5})
+    s = evals.run_all([{"id": "a", "clip": "x"}], None, judge=lambda m: good)
+    assert s["results"][0]["quality"][0]["location"] == 5 and "quality a" in evals.report(s)
+    s = evals.run_all([{"id": "a", "clip": "x"}], None, judge=lambda m: "garbage")
+    assert s["passed"] == 1 and s["results"][0]["quality"] == "judge output rejected"

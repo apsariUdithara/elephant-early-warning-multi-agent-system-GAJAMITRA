@@ -30,4 +30,4 @@ cases = load_cases(a.cases)
 for c in cases:  # clips are listed relative to the repo root
     if c.get("clip"):
         c["clip"] = str(root / c["clip"])
-print(report(run_all(cases, meta_chat)))
+print(report(run_all(cases, meta_chat, judge=meta_chat)))

@@ -84,10 +84,12 @@ One VM running docker compose. Only Caddy publishes a port.
 | Path | What |
 |---|---|
 | `ai-service/` | Python 3.11 package `gajamitra`: SAM 3.1 perception, tracking maths, agents. Also holds the working prototype web app until Spring Boot and React replace it |
-| `backend/` | Spring Boot 4.1, Java 21 (skeleton) |
-| `frontend/` | React + TypeScript, Vite (skeleton) |
+| `backend/` | Spring Boot 4.1, Java 21: users, sites, uploads, alerts, approvals, SMS, audit log, MCP server, evidence frames |
+| `frontend/` | React + TypeScript, Vite: officer dashboard (analyses, live page, approvals, new analysis, admin), English / Sinhala / Tamil |
+| `deploy/` | Caddy web door: serves the dashboard, forwards `/api`, never forwards `/mcp` |
+| `evals/` | Labelled eval cases, runner and footage sources (`footage.md`); the clips themselves are not in git |
 | `policy/policy_table.json` | Alert guardrail table shared by Python and Java |
-| `docker-compose.yml` | Local PostgreSQL and RabbitMQ |
+| `docker-compose.yml` | The whole stack: PostgreSQL, RabbitMQ, backend, worker, web (Caddy) |
 | `docs/` | Architecture, implementation plan, `development/` (Claude Code toolkit guide and quick start) |
 | `CLAUDE.md`, `.claude/` | Engineering handbook, path rules, skills, review agents and the guard hook used with Claude Code |
 | `.github/workflows/` | CI, PR checks (commit messages, PR title) and semantic-release |
@@ -116,7 +118,8 @@ Open http://127.0.0.1:8000. Upload an MP4, click **Set village boundary** (two p
 copy .env.example .env          # then set POSTGRES_PASSWORD, RABBITMQ_DEFAULT_PASS, MCP_API_KEY,
                                 # GAJAMITRA_ADMIN_USERNAME / _PASSWORD (12+ chars), MODEL_API_KEY;
                                 # GAJAMITRA_SECURE_COOKIES=false when using plain http://127.0.0.1
-docker compose up -d --build    # postgres, rabbitmq, backend (http://127.0.0.1:8080), worker
+docker compose up -d --build    # postgres, rabbitmq, backend, worker, web: open https://localhost (local certificate)
+                                # for a public host set SITE_ADDRESS=your.host.name (and WEB_BIND=0.0.0.0)
 ```
 
 Log in with `POST /api/login` (form fields `username`, `password`; send the `XSRF-TOKEN` cookie back as the
@@ -130,10 +133,25 @@ Analysing a clip calls the Meta API and spends credits.
 |---|---|
 | ai-service | `ruff check .` and `pytest` (tracking maths, no API calls) |
 | backend | `.\mvnw verify` |
-| frontend | `npm ci`, `npm run lint`, `npm run build` |
+| frontend | `npm ci`, `npm run lint`, `npm test`, `npm run build` |
 | infrastructure | copy `.env.example` to `.env`, set the passwords, `docker compose up -d` |
 
 GitHub Actions runs the first three on every push.
+
+## Evaluation
+
+`evals/cases.json` holds 16 labelled cases; `python evals/run.py --yes-spend-credits` runs the ones with footage against the real
+Meta API (it costs credits) with stub tools, so nothing is sent. It reports counts and an AI-judge score for alert quality.
+
+| Run | Result |
+|---|---|
+| Latest (13 of 16 cases have footage) | 13/13 pass |
+
+**Read this honestly.** 13/13 is not an accuracy figure. After the first run scored 6/13 I read the tracker rules and relabelled
+seven cases, because my labels and boundaries were wrong, not the tracker (a close-up elephant is at least `medium` by design; a
+boundary that puts the herd on the village side is `critical`). Only the two Hurulu labels are observed results. Still missing: herds
+outside the line and walking toward it, distant calm elephants (false-alarm test), a tabletop-toy clip, and labels set by someone who
+knows the scene. Sources and licences: [evals/footage.md](evals/footage.md).
 
 ## Research angle
 
