@@ -27,6 +27,20 @@ function clock(ms: number): string {
 
 // Counts down to the server's own expiry time using the server's clock (offset measured when the list arrived), so a
 // wrong clock in the browser can never make the escalation look sent, or held, when it is not.
+/** One evidence frame: opens full size in a new tab (said in the link name), and says so when it cannot be loaded. */
+function Frame({ analysisId, n, total }: { analysisId: string; n: number; total: number }) {
+  const { t } = useI18n()
+  const [failed, setFailed] = useState(false)
+  const url = `/api/analyses/${encodeURIComponent(analysisId)}/frames/${n}`
+  const alt = t('approvals.frameAlt', { n: n + 1, total })
+  if (failed) return <p className="frame-missing">{t('approvals.frameMissing', { n: n + 1 })}</p>
+  return (
+    <a href={url} target="_blank" rel="noreferrer" aria-label={t('approvals.frameOpen', { n: n + 1, total })}>
+      <img loading="lazy" src={url} alt={alt} onError={() => setFailed(true)} />
+    </a>
+  )
+}
+
 function Countdown({ approval }: { approval: ApprovalView }) {
   const { t } = useI18n()
   const left = Date.parse(approval.expiresAt) - (useNow() + approval.clockOffsetMs)
@@ -94,13 +108,7 @@ function ApprovalCard({ approval, onDecided }: { approval: ApprovalView; onDecid
           <h3>{t('approvals.frames')}</h3>
           <div className="frames">
             {Array.from({ length: approval.frames }, (_, i) => (
-              <a key={i} href={`/api/analyses/${encodeURIComponent(approval.analysisId)}/frames/${i}`} target="_blank" rel="noreferrer">
-                <img
-                  loading="lazy"
-                  src={`/api/analyses/${encodeURIComponent(approval.analysisId)}/frames/${i}`}
-                  alt={t('approvals.frameAlt', { n: i + 1, total: approval.frames })}
-                />
-              </a>
+              <Frame key={i} analysisId={approval.analysisId} n={i} total={approval.frames} />
             ))}
           </div>
         </>

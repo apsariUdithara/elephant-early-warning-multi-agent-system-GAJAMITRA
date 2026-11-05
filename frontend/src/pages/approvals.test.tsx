@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fakeBackend, OFFICER, renderApp, reply } from '../test/render'
@@ -40,6 +40,15 @@ describe('the approvals queue', () => {
     const first = await screen.findByAltText('Frame 1 of 2 from the clip')
     expect(first).toHaveAttribute('src', '/api/analyses/a1/frames/0')
     expect(screen.getByAltText('Frame 2 of 2 from the clip')).toHaveAttribute('src', '/api/analyses/a1/frames/1')
+  })
+
+  it('says a frame could not be loaded instead of leaving a broken picture, and names the new-tab link', async () => {
+    fakeBackend({ ...signedIn, 'GET /api/approvals': () => reply(200, [approval({ frames: 1 })]) })
+    renderApp('/approvals')
+    const img = await screen.findByAltText('Frame 1 of 1 from the clip')
+    expect(screen.getByRole('link', { name: /opens full size in a new tab/ })).toBeInTheDocument()
+    fireEvent.error(img)
+    expect(await screen.findByText('Frame 1 could not be loaded')).toBeInTheDocument()
   })
 
   it('shows no picture section when there are no frames', async () => {

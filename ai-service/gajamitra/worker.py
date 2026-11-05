@@ -74,9 +74,10 @@ class Worker:
         if not self.frames_dir:
             return
         try:
-            folder = Path(self.frames_dir) / analysis_id  # analysis_id was checked to be a UUID: no path tricks
+            # The canonical UUID text is what Spring reads; any other spelling of the id would be saved where it never looks.
+            folder = Path(self.frames_dir) / str(uuid.UUID(analysis_id))
             folder.mkdir(parents=True, exist_ok=True)
-            for i, url in enumerate(state.get("keyframes") or []):
+            for i, url in enumerate((state.get("keyframes") or [])[:100]):  # Spring serves frames 0-99
                 head, _, data = url.partition(",")
                 if head == "data:image/jpeg;base64":
                     (folder / f"{i}.jpg").write_bytes(base64.b64decode(data))
