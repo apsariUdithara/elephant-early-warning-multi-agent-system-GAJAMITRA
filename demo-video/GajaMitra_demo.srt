@@ -1,0 +1,184 @@
+1
+00:00:00,000 --> 00:00:00,600
+But that closeness often leads to conflict.
+
+2
+00:00:00,600 --> 00:00:03,600
+Farmers lose crops. Elephants lose their homes.
+
+3
+00:00:03,600 --> 00:00:06,600
+Sometimes, both sides lose more than that.
+
+4
+00:00:09,900 --> 00:00:10,737
+In Sri Lanka,
+
+5
+00:00:10,737 --> 00:00:16,792
+human–elephant conflict kills hundreds of elephants and more than a hundred people every year,
+
+6
+00:00:16,792 --> 00:00:18,789
+often at the edge of a village.
+
+7
+00:00:18,789 --> 00:00:21,430
+The warning almost always comes too late.
+
+8
+00:00:21,830 --> 00:00:25,574
+Existing systems are detectors trained for one camera.
+
+9
+00:00:25,574 --> 00:00:27,723
+They stop at elephant detected.
+
+10
+00:00:27,723 --> 00:00:31,606
+Nobody tells the village how long it has, or what to do.
+
+11
+00:00:31,606 --> 00:00:36,460
+GajaMitra goes from video to a warning in the villager's own language.
+
+12
+00:00:36,860 --> 00:00:40,911
+An officer picks a site and uploads a boundary camera clip.
+
+13
+00:00:40,911 --> 00:00:44,000
+This site is in test mode: alerts are stored,
+
+14
+00:00:44,000 --> 00:00:46,815
+and no text message reaches a real phone.
+
+15
+00:00:46,815 --> 00:00:51,484
+Then the officer draws the village boundary: two points on the line,
+
+16
+00:00:51,484 --> 00:00:55,330
+and one on the village side. No training data is needed.
+
+17
+00:00:55,730 --> 00:01:00,522
+Meta's SAM 3.1 tracks every elephant from one text prompt: elephant.
+
+18
+00:01:00,522 --> 00:01:05,385
+Object IDs stay the same across frames, so we get real tracks: speed,
+
+19
+00:01:05,385 --> 00:01:10,037
+distance to the boundary, and an arrival time. Plain, tested code,
+
+20
+00:01:10,037 --> 00:01:12,856
+not an AI, turns that into a risk level.
+
+21
+00:01:12,856 --> 00:01:16,662
+A herd standing still at the fence is never rated low.
+
+22
+00:01:16,662 --> 00:01:19,200
+This wait is shortened in the video.
+
+23
+00:01:19,600 --> 00:01:23,498
+Two Muse Spark agents read the frames and the tracker data.
+
+24
+00:01:23,498 --> 00:01:26,933
+One proposes the alert, and the other challenges it.
+
+25
+00:01:26,933 --> 00:01:31,955
+Then a deterministic guard sets the severity from what the tracker measured.
+
+26
+00:01:31,955 --> 00:01:36,250
+The AI proposes, the code decides. The warning is issued at once,
+
+27
+00:01:36,250 --> 00:01:38,232
+in English, Sinhala and Tamil.
+
+28
+00:01:38,232 --> 00:01:41,800
+The translations still need a native speaker's review.
+
+29
+00:01:42,200 --> 00:01:46,219
+A stronger escalation, danger, waits for a wildlife officer,
+
+30
+00:01:46,219 --> 00:01:49,837
+who sees the exact text and the frames the agents saw.
+
+31
+00:01:49,837 --> 00:01:53,990
+The warning has already gone out, so approval never delays it.
+
+32
+00:01:53,990 --> 00:01:55,464
+And if nobody answers,
+
+33
+00:01:55,464 --> 00:01:59,551
+the escalation is sent automatically when the timer runs out.
+
+34
+00:01:59,551 --> 00:02:02,700
+The officer is never a single point of failure.
+
+35
+00:02:03,100 --> 00:02:08,125
+Every alert carries an idempotency key, so a retry never sends twice.
+
+36
+00:02:08,125 --> 00:02:12,130
+The Spring Boot backend re-checks the guard on its own,
+
+37
+00:02:12,130 --> 00:02:15,772
+and refuses any alert with no stored tracker risk.
+
+38
+00:02:15,772 --> 00:02:17,811
+Python never sends anything:
+
+39
+00:02:17,811 --> 00:02:20,870
+every side effect is an audited tool call.
+
+40
+00:02:21,270 --> 00:02:24,823
+We also ran labelled clips against the real models.
+
+41
+00:02:24,823 --> 00:02:27,401
+The first run passed six of thirteen.
+
+42
+00:02:27,401 --> 00:02:30,676
+Most misses were our own labels and boundaries,
+
+43
+00:02:30,676 --> 00:02:33,742
+and after correcting them all thirteen pass.
+
+44
+00:02:33,742 --> 00:02:38,619
+That shows the system follows its rules. It is not an accuracy figure,
+
+45
+00:02:38,619 --> 00:02:42,939
+and independent labels are next. GajaMitra: a warning in time,
+
+46
+00:02:42,939 --> 00:02:45,100
+in the villager's own language.
+
