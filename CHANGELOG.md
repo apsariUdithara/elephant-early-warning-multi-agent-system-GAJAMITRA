@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.19.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.18.0...v1.19.0) (2026-11-05)
+
+### Features
+
+* audit evidence views, handle broken frames, add alert-quality scores and update the README ([55ab9ae](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/55ab9ae226bf9a14c801d75ce8fa1c0ae7635ef1))
+
 ## [1.18.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.17.0...v1.18.0) (2026-11-05)
 
 ### Features
