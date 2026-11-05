@@ -2,12 +2,20 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { parseAnalysisList, parseSites } from '../api/parse'
 import { useApi } from '../api/useApi'
+import type { AnalysisView } from '../api/types'
 import RiskBadge from '../components/RiskBadge'
 import { LoadError, Loading } from '../components/StateMessage'
 import { useI18n } from '../i18n/useI18n'
 
-// The latest analyses, newest first, for all sites or one (the site's incident history). Status and risk are both text;
-// a risk that is not recorded yet says so.
+// The latest analyses for all sites or one (the site's incident history): ones that need attention first (waiting for an
+// officer, then critical, then high), the rest newest first. Status and risk are both text; a risk not recorded yet says so.
+function urgency(a: AnalysisView): number {
+  if (a.status === 'AWAITING_APPROVAL') return 0
+  if (a.risk === 'critical') return 1
+  if (a.risk === 'high') return 2
+  return 3
+}
+
 export default function AnalysesPage() {
   const { t, formatDateTime } = useI18n()
   const [siteId, setSiteId] = useState('')
@@ -35,8 +43,8 @@ export default function AnalysesPage() {
       {state.status === 'ready' && state.data.length === 0 && <p className="muted">{t('analyses.empty')}</p>}
       {state.status === 'ready' && state.data.length > 0 && (
         <ul className="analysis-list">
-          {state.data.map((a) => (
-            <li key={a.id} className="analysis-row">
+          {[...state.data].sort((x, y) => urgency(x) - urgency(y)).map((a) => (
+            <li key={a.id} className="analysis-row" data-urgent={urgency(a) < 3} data-risk={a.risk ?? undefined}>
               <Link className="analysis-status" data-status={a.status} to={`/analyses/${encodeURIComponent(a.id)}`}>
                 {t(`status.${a.status}`)}
               </Link>

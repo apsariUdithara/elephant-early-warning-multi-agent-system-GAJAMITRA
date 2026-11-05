@@ -64,6 +64,7 @@
   --accent: var(--signal-blue);
   --accent-text: var(--white);
   --focus: var(--signal-blue);
+  --nav-active: rgb(255 255 255 / 0.14); /* the header is dark in both themes */
   --on-risk: var(--dark-bg);
   --on-risk-strong: var(--white);
   color-scheme: light;
@@ -212,7 +213,7 @@ a:visited { color: var(--accent); }
   color: var(--cloud-white);
   text-decoration: none;
 }
-.app-nav a[aria-current="page"] { background: rgb(255 255 255 / 0.14); font-weight: 700; text-decoration: underline; }
+.app-nav a[aria-current="page"] { background: var(--nav-active); font-weight: 700; text-decoration: underline; }
 .app-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .muted-on-dark { color: var(--slate-300); }
 .lang-switch { display: flex; gap: var(--space-1); }
@@ -247,6 +248,9 @@ input {
 .state-error p { margin: 0 0 var(--space-3); }
 
 .analysis-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.analysis-row[data-urgent="true"] { border-inline-start: 6px solid var(--risk-high); background: var(--surface); }
+.analysis-row[data-risk="critical"] { border-inline-start-color: var(--risk-critical); }
+.analysis-row[data-risk="high"] { border-inline-start-color: var(--risk-high); }
 .analysis-row:hover { border-color: var(--accent); }
 .analysis-row {
   display: flex;
@@ -365,3 +369,5 @@ textarea {
   .muted-on-dark { display: none; }
   .app-main { padding-top: var(--space-6); }
 }
+
+.analysis-row { border-inline-start-width: 6px; } /* same width on every row, so the text lines up */

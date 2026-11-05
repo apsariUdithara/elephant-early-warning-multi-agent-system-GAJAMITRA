@@ -192,6 +192,22 @@ describe('the analyses page', () => {
   })
 })
 
+describe('the analyses list order', () => {
+  it('puts what needs attention first: waiting for an officer, then critical, then high, then the rest', async () => {
+    const row = (id: string, status: string, risk: string | null) => ({ id, siteId: 's1', status, risk, createdAt: '2026-01-01T00:00:00Z' })
+    fakeBackend({
+      'GET /api/me': () => reply(200, OFFICER),
+      'GET /api/site-options': () => reply(200, []),
+      'GET /api/analyses': () =>
+        reply(200, [row('a', 'COMPLETED', 'low'), row('b', 'COMPLETED', 'high'), row('c', 'COMPLETED', 'critical'), row('d', 'AWAITING_APPROVAL', 'high')]),
+    })
+    renderApp('/')
+    await screen.findByText('Waiting for the officer')
+    const hrefs = screen.getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/analyses/')).map((l) => l.getAttribute('href'))
+    expect(hrefs).toEqual(['/analyses/d', '/analyses/c', '/analyses/b', '/analyses/a'])
+  })
+})
+
 describe('languages', () => {
   it('switches the whole page to Sinhala or Tamil, keeps the choice and sets the document language', async () => {
     fakeBackend({ 'GET /api/me': () => reply(200, OFFICER), 'GET /api/analyses': () => reply(200, ANALYSES) })
