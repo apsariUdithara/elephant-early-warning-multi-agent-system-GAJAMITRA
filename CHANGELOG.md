@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.16.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.15.0...v1.16.0) (2026-11-04)
+
+### Features
+
+* add the admin pages for sites and villagers and the per-site history filter ([a214e4b](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/a214e4bf9b270acb43cbf77dd429b47d7f614a5c))
+
+## [1.15.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.14.0...v1.15.0) (2026-11-04)
+
+### Features
+
+* add the new analysis page with the boundary picker ([8480e92](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/8480e92b3a68eddd8eedd0a1681617e37843abc5))
+
 ## [1.14.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.13.0...v1.14.0) (2026-11-04)
 
 ### Features

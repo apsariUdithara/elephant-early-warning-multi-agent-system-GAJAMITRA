@@ -11,6 +11,9 @@ import type {
   Me,
   Risk,
   Severity,
+  SiteFull,
+  SiteView,
+  Subscriber,
 } from './types'
 
 export class UnexpectedResponse extends Error {}
@@ -53,6 +56,61 @@ function parseAnalysis(value: unknown): AnalysisView {
 export function parseAnalysisList(value: unknown): AnalysisView[] {
   if (!Array.isArray(value)) throw new UnexpectedResponse('analyses')
   return value.map(parseAnalysis)
+}
+
+export function parseSites(value: unknown): SiteView[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('sites')
+  return value.map((v) => {
+    if (isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string' && (v.mode === 'SHADOW' || v.mode === 'LIVE')) {
+      return { id: v.id, name: v.name, mode: v.mode }
+    }
+    throw new UnexpectedResponse('site')
+  })
+}
+
+function parseSiteFull(v: unknown): SiteFull {
+  if (
+    isRecord(v) &&
+    typeof v.id === 'string' &&
+    typeof v.name === 'string' &&
+    (v.mode === 'SHADOW' || v.mode === 'LIVE') &&
+    typeof v.villages === 'string' &&
+    typeof v.officerContact === 'string' &&
+    typeof v.requiresApproval === 'boolean' &&
+    typeof v.approvalTimeoutS === 'number'
+  ) {
+    return {
+      id: v.id,
+      name: v.name,
+      mode: v.mode,
+      villages: v.villages,
+      officerContact: v.officerContact,
+      requiresApproval: v.requiresApproval,
+      approvalTimeoutS: v.approvalTimeoutS,
+    }
+  }
+  throw new UnexpectedResponse('site')
+}
+
+export function parseSitesFull(value: unknown): SiteFull[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('sites')
+  return value.map(parseSiteFull)
+}
+
+export function parseSubscribers(value: unknown): Subscriber[] {
+  if (!Array.isArray(value)) throw new UnexpectedResponse('subscribers')
+  return value.map((v) => {
+    if (isRecord(v) && typeof v.id === 'string' && typeof v.phone === 'string' && (v.language === 'EN' || v.language === 'SI' || v.language === 'TA')) {
+      return { id: v.id, phone: v.phone, language: v.language }
+    }
+    throw new UnexpectedResponse('subscriber')
+  })
+}
+
+/** The answer to POST /api/analyses: the id of the queued analysis. */
+export function parseCreatedId(value: unknown): string {
+  if (isRecord(value) && typeof value.id === 'string' && value.id !== '') return value.id
+  throw new UnexpectedResponse('created analysis')
 }
 
 const SEVERITIES: readonly string[] = ['advisory', 'warning', 'danger']

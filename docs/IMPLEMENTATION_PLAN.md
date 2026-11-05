@@ -489,9 +489,32 @@ signed-in users, deleted with the footage after 30 days).
     how the guard and verifier decided. Live updates over SSE: an event re-reads the analysis, the page says when the
     connection dropped ("may be out of date") or was refused ("live updates stopped"), and the stream is closed when
     the page is left.
-  - Still to build: new analysis with the boundary picker, history per site, admin; evidence keyframes on the
-    approval screen. **Visual review in a browser and native-speaker review of the Sinhala and Tamil strings are still
-    open.**
+- **Built in GM-30** (`/new`, start an analysis): site, MP4 clip (checked here for type and 200 MB, and again by the
+  server), the village boundary, upload (`POST /api/analyses`), then the live analysis page.
+  - The boundary is three points (two on the boundary line, one on the village side) as fractions of the frame, the
+    format `track.py` uses. Set by clicking the picture, which is shown at the clip's own aspect ratio so a fraction of
+    the picture is a fraction of the frame, **or typed as percentages**, so a keyboard or screen-reader user can start
+    an analysis too (Enter in a typed field applies the points and never submits the form).
+  - A **LIVE** site, where real SMS can go to villagers, needs an explicit tick, and the form refuses to submit without
+    it however it is submitted; the tick belongs to one site. The page shows whether the chosen site is in test or live
+    mode, but **the server decides the effective mode** when alerts are accepted, so a page that is out of date can
+    never turn test mode into real SMS.
+  - A failed upload keeps the clip and the points and explains why (not MP4, too large, not accepted, failed).
+  - Officers read the sites they can analyse through `GET /api/site-options` (id, name, mode only); `/api/sites`
+    (officer contact, villages, approval settings, villagers' phones) stays admin-only.
+  - **Known gap:** a portrait phone video that carries a rotation tag is untested. The page uses the size the browser
+    shows; whether SAM and OpenCV see the same orientation has to be checked with such a clip before relying on it.
+- **Built in GM-31** (history per site and the admin pages):
+  - The analyses list has a **site filter** (shown when there is more than one site): that site's incident history.
+  - **Admin** (`/admin`, `/admin/sites/:id`; the link and pages only for an admin, which is a convenience: the server
+    checks the role on every endpoint and nothing admin-only is even requested for an officer): the site list with
+    mode, approval rule and time limit shown as text; create a site (starts in test mode); edit its settings
+    (the approval time limit is 30 to 1800 s, so an escalation can never be held for long); the **mode switch**, where
+    going LIVE says plainly that villagers will receive real SMS and asks first; and the villagers who receive SMS
+    (add with an international-format number, remove with a confirmation that says past SMS records stay without the
+    phone number). The server states why a change is not accepted and the page shows that reason.
+- Still to build: evidence keyframes on the approval screen; the hackathon submission pieces. **Visual review in a
+  browser and native-speaker review of the Sinhala and Tamil strings are still open.**
 
 ---
 

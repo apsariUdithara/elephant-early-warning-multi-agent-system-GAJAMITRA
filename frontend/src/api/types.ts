@@ -21,6 +21,30 @@ export interface AnalysisView {
   createdAt: string
 }
 
+/** One site in GET /api/sites (officers may read the list; changes and villagers stay with admins). */
+export interface SiteView {
+  id: string
+  name: string
+  mode: 'SHADOW' | 'LIVE'
+}
+
+/** GET /api/sites (admin only): everything about a site. */
+export interface SiteFull extends SiteView {
+  villages: string
+  officerContact: string
+  requiresApproval: boolean
+  approvalTimeoutS: number
+}
+
+export type VillagerLanguage = 'EN' | 'SI' | 'TA'
+
+/** A villager who receives SMS for a site (admin only: the phone number is personal data). */
+export interface Subscriber {
+  id: string
+  phone: string
+  language: VillagerLanguage
+}
+
 export type Severity = 'advisory' | 'warning' | 'danger'
 export type DeliveryState = 'PENDING' | 'SENDING' | 'SENT' | 'FAILED' | 'SKIPPED_SHADOW'
 
