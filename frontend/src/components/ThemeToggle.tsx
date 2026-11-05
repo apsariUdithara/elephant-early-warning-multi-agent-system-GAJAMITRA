@@ -8,7 +8,7 @@ export default function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getTheme)
   const dark = theme === 'dark'
   return (
-    <button type="button" className="button button-quiet" aria-pressed={dark} onClick={() => saveTheme(dark ? 'light' : 'dark')}>
+    <button type="button" className="button button-quiet theme-toggle" aria-pressed={dark} onClick={() => saveTheme(dark ? 'light' : 'dark')}>
       {t('theme.dark')}
     </button>
   )

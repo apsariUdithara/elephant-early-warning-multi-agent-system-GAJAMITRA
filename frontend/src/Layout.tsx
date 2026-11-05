@@ -10,7 +10,14 @@ export default function Layout() {
   const { t } = useI18n()
   const { session, logout, retry } = useAuth()
 
-  if (session.status === 'loading') return <Loading />
+  if (session.status === 'loading') {
+    return (
+      <main className="app-main">
+        <h1>{t('app.title')}</h1>
+        <Loading />
+      </main>
+    )
+  }
   if (session.status === 'anonymous') return <Navigate to="/login" replace />
   if (session.status === 'unreachable') {
     return (

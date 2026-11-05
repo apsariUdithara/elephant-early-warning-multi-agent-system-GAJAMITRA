@@ -124,7 +124,7 @@ export default function AdminSitePage() {
             (villagers.state.data.length === 0 ? (
               <p className="muted">{t('admin.subscribers.none')}</p>
             ) : (
-              <ul className="analysis-list">
+              <ul className="analysis-list narrow">
                 {villagers.state.data.map((v) => (
                   <li key={v.id} className="analysis-row">
                     <span className="count">{v.phone}</span>
