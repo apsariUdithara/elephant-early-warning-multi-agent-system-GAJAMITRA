@@ -370,4 +370,21 @@ textarea {
   .app-main { padding-top: var(--space-6); }
 }
 
-.analysis-row { border-inline-start-width: 6px; } /* same width on every row, so the text lines up */
+
+/* Round 3: spacing and hierarchy found by looking at every screen. */
+.incident { border-inline-start-width: 6px; } /* same edge width on every analyses row, so the text lines up */
+.narrow, .notice { max-width: 48rem; }
+.analysis-list { margin-bottom: var(--space-6); }
+.new-form:not(h2 + form) { margin-top: var(--space-6); }
+.new-form p { margin: 0; }
+.login-form h1 { font-size: var(--text-lg); font-weight: 700; color: var(--text-muted); }
+.login-form h2 { font-size: var(--text-xl); }
+
+/* Sinhala and Tamil: lighter headings, no negative letter-spacing and a smaller page title. Extra-bold, tightly spaced
+   Indic script joins its letters into blobs (seen on the analysis page in Sinhala). */
+:lang(si) h1, :lang(si) h2, :lang(si) h3, :lang(si) h4, :lang(ta) h1, :lang(ta) h2, :lang(ta) h3, :lang(ta) h4 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+:lang(si) h2, :lang(ta) h2 { font-size: var(--text-xl); }
+:lang(si) h3, :lang(ta) h3 { font-size: var(--text-lg); }

@@ -107,7 +107,9 @@ export default function NewAnalysisPage() {
                 setLiveConfirmed(false) // the tick belongs to one site
               }}
             >
-              <option value="" disabled />
+              <option value="" disabled>
+                {t('new.sitePlaceholder')}
+              </option>
               {sites.map((s) => (
                 <option key={s.id} value={s.id}>
                   {t('new.siteOption', { name: s.name, mode: t(`mode.${s.mode}`) })}

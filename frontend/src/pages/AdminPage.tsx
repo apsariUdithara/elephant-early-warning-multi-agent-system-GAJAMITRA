@@ -44,7 +44,7 @@ export default function AdminPage() {
           {state.data.length === 0 ? (
             <p>{t('admin.none')}</p>
           ) : (
-            <ul className="analysis-list">
+            <ul className="analysis-list narrow">
               {state.data.map((s) => (
                 <li key={s.id} className="analysis-row">
                   <strong>{s.name}</strong>
