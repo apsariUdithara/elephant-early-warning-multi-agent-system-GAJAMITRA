@@ -21,12 +21,15 @@ The two `flipped-village-side` cases are DERIVED from the Hurulu and Pinnawala c
 
 News, YouTube, Storyful and Pond5 clips are copyrighted or paid and are NOT used until permission or a licence is obtained. Pexels and Pixabay block scripted downloads (HTTP 403): download by hand and record the licence here. The tabletop toy case needs your own recording.
 
-## Results (third real run, 11 cases with footage)
+| `scratch/footage/empty_forest_road_15s.mp4` | Elephants crossing road.webm, Wikimedia Commons, by L. Shyamal (no elephants in the sampled frames despite the title) | CC0 |
+| `scratch/footage/river_approach_15s.mp4` | `215845_medium.mp4`, downloaded by hand by the developer | **licence and source URL not yet recorded: confirm before any public use** |
 
-5/11. All labels except the Hurulu pair are predictions made before the run, not independent labels.
-- Passing: Hurulu critical and high, Pinnawala at the boundary, both no-elephant clips.
-- The three calm-elephant clips all came out `medium` (predicted `low`).
-- The Assam herd came out `critical` (predicted `high`).
-- Both flipped-village-side cases came out `critical` (predicted `medium`). Reversing the village side did not lower the risk at all, which may mean the side is ignored once elephants are at the line. Investigate before trusting the geometry.
+Inspected but NOT used: `istockphoto-943394016` (Getty watermark, no licence), `herd-in-the-shade.mp4`, `jeeps.mp4`, `219323_medium.mp4` (sources and licences unknown), the Malawi and Pinnawala-01 Commons files (calm herds, not needed yet).
 
-These are real findings to look at, not to fix by changing labels.
+## Results (fourth real run, 13 cases with footage)
+
+6/13. Passing: Hurulu critical and high, Pinnawala at the boundary, three no-elephant clips (paddy, grass, empty road).
+- Calm elephants (3 clips): `medium`, predicted `low`.
+- Both approach clips (Assam crossing, river approach): `critical`, predicted `high`. My labels may simply be too low for elephants that fill the frame near the line; a person should decide.
+- Both flipped-village-side cases: `critical`, predicted `medium`: reversing the side did not lower the risk.
+Only the Hurulu labels are observed results; every other label is my prediction before the run.
