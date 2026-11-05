@@ -139,3 +139,12 @@ def test_a_disk_problem_never_delays_the_approval_event(tmp_path):
     w, events = jpeg_worker(blocker)  # frames_dir is a file: every write fails
     w.handle_request(request())
     assert types(events)[-1] == "approval_required"  # evidence is best effort; the escalation still waits for the officer
+
+
+def test_frames_are_saved_under_the_canonical_uuid_and_capped_at_one_hundred(tmp_path):
+    import uuid as _uuid
+
+    aid = _uuid.uuid4()
+    w, _ = jpeg_worker(tmp_path)
+    w._save_frames(aid.hex, {"keyframes": ["data:image/jpeg;base64,/9j/"] * 120})  # hyphen-less spelling of the same id
+    assert len(list((tmp_path / str(aid)).glob("*.jpg"))) == 100

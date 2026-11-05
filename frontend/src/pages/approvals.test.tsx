@@ -42,11 +42,13 @@ describe('the approvals queue', () => {
     expect(screen.getByAltText('Frame 2 of 2 from the clip')).toHaveAttribute('src', '/api/analyses/a1/frames/1')
   })
 
-  it('says so when a frame cannot be loaded, instead of leaving a broken picture', async () => {
+  it('says a frame could not be loaded instead of leaving a broken picture, and names the new-tab link', async () => {
     fakeBackend({ ...signedIn, 'GET /api/approvals': () => reply(200, [approval({ frames: 1 })]) })
     renderApp('/approvals')
-    fireEvent.error(await screen.findByAltText('Frame 1 of 1 from the clip'))
-    expect(await screen.findByText('Frame 1 could not be loaded.')).toBeInTheDocument()
+    const img = await screen.findByAltText('Frame 1 of 1 from the clip')
+    expect(screen.getByRole('link', { name: /opens full size in a new tab/ })).toBeInTheDocument()
+    fireEvent.error(img)
+    expect(await screen.findByText('Frame 1 could not be loaded')).toBeInTheDocument()
   })
 
   it('shows no picture section when there are no frames', async () => {

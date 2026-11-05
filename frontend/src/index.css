@@ -3,6 +3,16 @@
    Brand colours never mean risk; risk colours are used only for risk and always with a text label.
    The theme is set on <html data-theme> by the inline script in index.html (before first paint) and by theme.ts. */
 
+/* Inter for Latin text, self-hosted so the page needs no network for fonts (field use, slow links). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   /* Approved palette */
   --midnight-slate: #1e293b; /* brand-900, dark-surface */
@@ -32,9 +42,18 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-6: 24px;
-  /* System fonts with Sinhala and Tamil coverage (Nirmala UI on Windows, Noto on Android/Linux). */
-  --font: system-ui, "Segoe UI", "Nirmala UI", "Noto Sans Sinhala", "Noto Sans Tamil", "Iskoola Pota", "Latha",
+  /* Inter for Latin; Sinhala and Tamil fall through to system fonts with full coverage
+     (Nirmala UI on Windows, Noto on Android/Linux). One stack for the whole app. */
+  --font: "Inter", system-ui, "Segoe UI", "Nirmala UI", "Noto Sans Sinhala", "Noto Sans Tamil", "Iskoola Pota", "Latha",
     Roboto, sans-serif;
+
+  /* Type scale (rem, so the user's browser font size is respected) */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --space-8: 32px;
 
   /* Semantic tokens: light theme (the default for officer dashboards) */
   --bg: var(--cloud-white);
@@ -45,13 +64,15 @@
   --accent: var(--signal-blue);
   --accent-text: var(--white);
   --focus: var(--signal-blue);
+  --nav-active: rgb(255 255 255 / 0.14); /* the header is dark in both themes */
   --on-risk: var(--dark-bg);
   --on-risk-strong: var(--white);
   color-scheme: light;
 
   font-family: var(--font);
   font-size: 100%; /* respect the user's browser font size */
-  line-height: 1.5;
+  line-height: 1.6; /* a little extra room: Sinhala and Tamil glyphs are taller than Latin */
+  -webkit-font-smoothing: antialiased;
 }
 
 :root[data-theme="dark"] {
@@ -77,6 +98,19 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+
+h1, h2, h3, h4 { line-height: 1.3; text-wrap: balance; }
+h2 { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 var(--space-6); }
+h3 { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.01em; margin: var(--space-8) 0 var(--space-3); }
+h4 { font-size: var(--text-lg); font-weight: 700; }
+.alert-card h4, .approval-card h3 { font-size: var(--text-lg); }
+label { font-size: var(--text-sm); }
+.muted, .analysis-time, .analysis-row .muted { font-size: var(--text-sm); }
+p { text-wrap: pretty; }
+
+/* Links use the brand accent, visited or not: the browser's purple is not part of the palette. */
+a { color: var(--accent); text-underline-offset: 0.2em; }
+a:visited { color: var(--accent); }
 
 :focus-visible {
   outline: 3px solid var(--focus);
@@ -107,13 +141,17 @@ body {
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
+.app-header a, .app-header a:visited { color: inherit; }
 
 .app-main {
   max-width: 60rem;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-8) var(--space-4) calc(var(--space-8) * 2);
+  min-width: 0;
 }
 
 .panel {
@@ -129,6 +167,7 @@ body {
 
 .button {
   min-height: 44px;
+  font-weight: 600;
   padding: 0 var(--space-4);
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -164,7 +203,7 @@ body {
 }
 
 /* App shell, navigation, forms and list states (GM-27). Semantic tokens only; errors use the non-risk accent. */
-.app-nav { display: flex; flex: 1 1 auto; gap: var(--space-2); }
+.app-nav { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: var(--space-1); }
 .app-nav a {
   display: inline-flex;
   align-items: center;
@@ -174,7 +213,7 @@ body {
   color: var(--cloud-white);
   text-decoration: none;
 }
-.app-nav a[aria-current="page"] { background: rgb(255 255 255 / 0.14); font-weight: 700; text-decoration: underline; }
+.app-nav a[aria-current="page"] { background: var(--nav-active); font-weight: 700; text-decoration: underline; }
 .app-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .muted-on-dark { color: var(--slate-300); }
 .lang-switch { display: flex; gap: var(--space-1); }
@@ -182,6 +221,7 @@ body {
 .button:disabled { opacity: 0.6; cursor: not-allowed; }
 .button-quiet { background: transparent; color: inherit; border-color: currentColor; }
 .button-quiet[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.theme-toggle[aria-pressed="true"] { background: transparent; color: inherit; border-color: currentColor; } /* a mode switch, not one of the language choices */
 
 .login { display: grid; place-content: center; gap: var(--space-4); min-height: 100vh; padding: var(--space-4); }
 .login-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
@@ -208,6 +248,10 @@ input {
 .state-error p { margin: 0 0 var(--space-3); }
 
 .analysis-list { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.analysis-row[data-urgent="true"] { border-inline-start: 6px solid var(--risk-high); background: var(--surface); }
+.analysis-row[data-risk="critical"] { border-inline-start-color: var(--risk-critical); }
+.analysis-row[data-risk="high"] { border-inline-start-color: var(--risk-high); }
+.analysis-row:hover { border-color: var(--accent); }
 .analysis-row {
   display: flex;
   flex-wrap: wrap;
@@ -224,7 +268,7 @@ input {
 
 /* Analysis detail and the approvals queue (GM-29). Text carries the meaning; borders and spacing group it. */
 .analysis-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
-.connection { margin: 0 0 var(--space-3); font-size: 0.875rem; color: var(--text-muted); }
+.connection { margin: 0 0 var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
 .connection[data-connection="reconnecting"] { color: var(--text); font-weight: 700; }
 .notice {
   margin: var(--space-3) 0;
@@ -254,7 +298,9 @@ input {
 .delivery-list { margin: 0; padding-inline-start: var(--space-4); }
 .count { font-variant-numeric: tabular-nums; font-weight: 700; }
 .frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--space-2); margin-bottom: var(--space-3); }
-.frames img { display: block; width: 100%; height: auto; border-radius: var(--radius); }
+.frames a { display: block; }
+.frames img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--border); border-radius: var(--radius); }
+.frame-missing { display: grid; place-items: center; aspect-ratio: 16 / 9; padding: var(--space-2); border: 1px dashed var(--border); border-radius: var(--radius); font-size: var(--text-sm); text-align: center; }
 .approval-list { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
 .countdown { margin: 0 0 var(--space-3); font-weight: 700; font-variant-numeric: tabular-nums; }
 .confirm { font-weight: 700; }
@@ -314,3 +360,31 @@ textarea {
   color: var(--text);
   font: inherit;
 }
+
+/* Phones: a shorter header, so the page content starts higher. Touch targets stay 44px. */
+@media (max-width: 40rem) {
+  .app-header { gap: var(--space-2); padding: var(--space-2) var(--space-3); }
+  .app-nav a { padding: 0 var(--space-2); }
+  .app-tools { gap: var(--space-1); }
+  .muted-on-dark { display: none; }
+  .app-main { padding-top: var(--space-6); }
+}
+
+
+/* Round 3: spacing and hierarchy found by looking at every screen. */
+.incident { border-inline-start-width: 6px; } /* same edge width on every analyses row, so the text lines up */
+.narrow, .notice { max-width: 48rem; }
+.analysis-list { margin-bottom: var(--space-6); }
+.new-form:not(h2 + form) { margin-top: var(--space-6); }
+.new-form p { margin: 0; }
+.login-form h1 { font-size: var(--text-lg); font-weight: 700; color: var(--text-muted); }
+.login-form h2 { font-size: var(--text-xl); }
+
+/* Sinhala and Tamil: lighter headings, no negative letter-spacing and a smaller page title. Extra-bold, tightly spaced
+   Indic script joins its letters into blobs (seen on the analysis page in Sinhala). */
+:lang(si) h1, :lang(si) h2, :lang(si) h3, :lang(si) h4, :lang(ta) h1, :lang(ta) h2, :lang(ta) h3, :lang(ta) h4 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+:lang(si) h2, :lang(ta) h2 { font-size: var(--text-xl); }
+:lang(si) h3, :lang(ta) h3 { font-size: var(--text-lg); }
