@@ -13,10 +13,20 @@ Expected risks for the two Hurulu cases are the observed results, not independen
 | `scratch/footage/paddy_terraces.mp4` | Paddy Fields, Wikimedia Commons | CC BY-SA 4.0 |
 | `scratch/footage/grass_field.mp4` | A rice field, Wikimedia Commons | CC BY-SA 3.0 |
 
-All clips were inspected by eye before use, re-encoded to small mp4 files and trimmed to 15 s or less.
+| `scratch/footage/assam_herd_15s.mp4` | A herd of elephant of Hoollongapar Gibbon Sanctuary, Jorhat, Assam, Wikimedia Commons (first 15 s of 46 s) | CC BY 4.0 |
 
-News and YouTube clips (NewsFirst, Hiru, Daily Mirror, CP Wild Lanka and similar) are copyrighted and are NOT used. Pexels and Pixabay block scripted downloads (HTTP 403): download those by hand and record the licence here.
+All clips were inspected by eye before use (the Assam clip across its whole length: a herd with calves crossing a road toward the camera while villagers watch; it is a crossing, not a village approach), re-encoded to small mp4 files and trimmed to 15 s or less.
 
-## Results (second real run, 8 cases with footage)
+The two `flipped-village-side` cases are DERIVED from the Hurulu and Pinnawala clips with only the village side reversed. They are not independent footage.
 
-5/8. The three calm-elephant cases (Kaziranga 1 and 2, Pinnawala bathing) were labelled `low` before the run and the system said `medium` and sent a warning each time. The two no-elephant clips and the three alert cases pass. The repeated medium on calm elephants is a real finding (probably the NEAR_BODIES floor or the distance maths) to investigate, not to fix by changing the labels.
+News, YouTube, Storyful and Pond5 clips are copyrighted or paid and are NOT used until permission or a licence is obtained. Pexels and Pixabay block scripted downloads (HTTP 403): download by hand and record the licence here. The tabletop toy case needs your own recording.
+
+## Results (third real run, 11 cases with footage)
+
+5/11. All labels except the Hurulu pair are predictions made before the run, not independent labels.
+- Passing: Hurulu critical and high, Pinnawala at the boundary, both no-elephant clips.
+- The three calm-elephant clips all came out `medium` (predicted `low`).
+- The Assam herd came out `critical` (predicted `high`).
+- Both flipped-village-side cases came out `critical` (predicted `medium`). Reversing the village side did not lower the risk at all, which may mean the side is ignored once elephants are at the line. Investigate before trusting the geometry.
+
+These are real findings to look at, not to fix by changing labels.
