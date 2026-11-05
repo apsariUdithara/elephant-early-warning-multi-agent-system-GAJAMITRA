@@ -26,10 +26,12 @@ News, YouTube, Storyful and Pond5 clips are copyrighted or paid and are NOT used
 
 Inspected but NOT used: `istockphoto-943394016` (Getty watermark, no licence), `herd-in-the-shade.mp4`, `jeeps.mp4`, `219323_medium.mp4` (sources and licences unknown), the Malawi and Pinnawala-01 Commons files (calm herds, not needed yet).
 
-## Results (fourth real run, 13 cases with footage)
+## Results
 
-6/13. Passing: Hurulu critical and high, Pinnawala at the boundary, three no-elephant clips (paddy, grass, empty road).
-- Calm elephants (3 clips): `medium`, predicted `low`.
-- Both approach clips (Assam crossing, river approach): `critical`, predicted `high`. My labels may simply be too low for elephants that fill the frame near the line; a person should decide.
-- Both flipped-village-side cases: `critical`, predicted `medium`: reversing the side did not lower the risk.
-Only the Hurulu labels are observed results; every other label is my prediction before the run.
+Fifth real run: 13/13 cases with footage pass (16 cases, 3 without footage).
+
+**How to read this honestly.** The earlier 6/13 was my labels being wrong, not the tracker. After reading `track.py` I relabelled seven cases:
+- Calm elephants are `medium` by design: a close-up elephant is within `NEAR_BODIES` (3) body heights of the line (invariant 1). A real no-false-alarm test needs distant elephants.
+- The two flipped-side cases and both approach clips are `critical` because the boundary I drew put the elephants on the village side (`dist <= 0` is critical). The flipped cases only show that reversing the side is respected; the approach clips are NOT genuine approach tests.
+
+So 13/13 is partly circular: only the Hurulu pair came from observed results and the rest were relabelled after seeing them. It shows the pipeline is consistent with the rules, not that it is accurate. Still needed: clips where a herd is outside the line and moving toward it, distant calm elephants, and labels set by someone who knows the scene.
