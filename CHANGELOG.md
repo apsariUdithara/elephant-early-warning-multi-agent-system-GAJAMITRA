@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.17.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.16.0...v1.17.0) (2026-11-05)
+
+### Features
+
+* show the evidence frames on the approval screen and add the eval runner ([98fe3c8](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/98fe3c8827c0013d0183cf4818f078aa81468102))
+
+### Bug Fixes
+
+* let the eval runner find the clips and the key, and ignore officer reports when scoring ([ec46e07](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/ec46e072c286031f860c619046b4aaf68b251b93))
+
 ## [1.16.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.15.0...v1.16.0) (2026-11-04)
 
 ### Features
