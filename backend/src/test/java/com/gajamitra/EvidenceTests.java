@@ -100,6 +100,19 @@ class EvidenceTests {
 	}
 
 	@Test
+	void viewingAFrameOfARealAnalysisIsAudited() throws Exception {
+		UUID site = jdbc.queryForObject("insert into site (name) values ('Hurulu') returning id", UUID.class);
+		UUID analysis = jdbc.queryForObject("""
+				insert into analysis (site_id, video_path, boundary) values (?, 'v', '{0,0.5,1,0.5,0.5,0.9}') returning id""",
+				UUID.class, site);
+		Files.createDirectories(DIR.resolve(analysis.toString()));
+		Files.write(DIR.resolve(analysis.toString()).resolve("0.jpg"), new byte[] { 1 });
+		mvc.perform(get("/api/analyses/" + analysis + "/frames/0").with(user("officer1").roles("OFFICER"))).andExpect(status().isOk());
+		assertThat(jdbc.queryForObject("select count(*) from audit_log where analysis_id = ? and action = 'evidence_viewed'",
+				Integer.class, analysis)).isEqualTo(1);
+	}
+
+	@Test
 	void evidenceOlderThanThirtyDaysIsDeletedAndRecentEvidenceKept() throws Exception {
 		UUID old = frames(2);
 		UUID recent = frames(1);
