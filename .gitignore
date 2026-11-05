@@ -16,3 +16,7 @@ data/
 
 # Temporary files
 scratch/
+HANDOVER.md
+
+/graphify-out
+demo-video/*.mp4

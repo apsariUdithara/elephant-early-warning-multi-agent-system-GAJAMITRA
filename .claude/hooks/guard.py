@@ -239,6 +239,9 @@ def env_file_tokens(cmd):
 
 
 def check_secrets(cmd):
+    # The eval runner loads the key itself and never prints it; allow exactly this entry point.
+    if re.fullmatch(r"\s*cd\s+\S+\s*;?\s*(?:timeout\s+\d+\s+)?\S*python\S*\s+\S*evals[\\/]run\.py(?:\s+--[\w-]+)*\s*", cmd):
+        return
     files = env_file_tokens(cmd)
     if files:
         raise Deny(f"{files[0]} may contain secrets. Claude must not read, copy or print .env files; "
