@@ -1,0 +1,34 @@
+# The only public door to GajaMitra (plan Phase 7). It serves the built dashboard and forwards /api to Spring.
+# /mcp, /sse and /actuator are NOT forwarded: the AI worker reaches /mcp on the private compose network only.
+# SITE_ADDRESS is the public host name (Caddy then gets a real HTTPS certificate); "localhost" uses a local certificate.
+{$SITE_ADDRESS:localhost} {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Strict-Transport-Security "max-age=31536000"
+	}
+
+	@private path /mcp /mcp/* /sse /sse/* /actuator /actuator/*
+	handle @private {
+		respond 404
+	}
+
+	handle /api/* {
+		request_body {
+			max_size 120MB
+		}
+		# flush_interval -1: the live analysis page uses server-sent events, which must not be buffered.
+		reverse_proxy backend:8080 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
