@@ -74,9 +74,9 @@ class Worker:
         if not self.frames_dir:
             return
         try:
-            folder = Path(self.frames_dir) / analysis_id  # analysis_id was checked to be a UUID: no path tricks
+            folder = Path(self.frames_dir) / str(uuid.UUID(analysis_id))  # canonical form, the name Spring reads; no path tricks
             folder.mkdir(parents=True, exist_ok=True)
-            for i, url in enumerate(state.get("keyframes") or []):
+            for i, url in enumerate((state.get("keyframes") or [])[:100]):  # Spring reads frames 0-99
                 head, _, data = url.partition(",")
                 if head == "data:image/jpeg;base64":
                     (folder / f"{i}.jpg").write_bytes(base64.b64decode(data))
