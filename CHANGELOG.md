@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.21.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.20.0...v1.21.0) (2026-11-05)
+
+### Features
+
+* fix spacing, login hierarchy, site placeholder and Indic headings from a screen review ([1511842](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/1511842f454e8a3f009401f623718a92eadfac3f))
+* list urgent analyses first and mark them, and show the app name while loading ([4a73b90](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/4a73b904fc5f7510594d70b047b5f364a27ece03))
+* sharper type scale, evidence frame fallbacks and a canonical frame folder name ([d0a42c2](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/d0a42c2e4524086d8abbd5d58b3cb5b39625cbde))
+* use Inter with a type scale, brand-coloured links and a compact phone header ([8f22044](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/8f220441653b0623a7ed1d00821d62a681a1d0f6))
+
+### Bug Fixes
+
+* save evidence frames under the canonical id, cap them at 100 and give the images a fixed shape ([c4d7284](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/c4d7284a20402ab3632fb9e424a6d3ae10ddf118))
+
 ## [1.20.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.19.0...v1.20.0) (2026-11-05)
 
 ### Features
