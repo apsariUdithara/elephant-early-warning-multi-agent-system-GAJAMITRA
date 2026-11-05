@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.20.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.19.0...v1.20.0) (2026-11-05)
+
+### Features
+
+* add a script that downloads the open-licence eval clips ([3466a8c](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/commit/3466a8c578236bb8955fd1999806749943e92af0))
+
 ## [1.19.0](https://github.com/apsariUdithara/elephant-early-warning-multi-agent-system-GajaMitra/compare/v1.18.0...v1.19.0) (2026-11-05)
 
 ### Features
