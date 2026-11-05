@@ -33,3 +33,5 @@ Inspected but NOT used: `istockphoto-943394016` (Getty watermark, no licence), `
 - Both approach clips (Assam crossing, river approach): `critical`, predicted `high`. My labels may simply be too low for elephants that fill the frame near the line; a person should decide.
 - Both flipped-village-side cases: `critical`, predicted `medium`: reversing the side did not lower the risk.
 Only the Hurulu labels are observed results; every other label is my prediction before the run.
+
+To recreate the clips: `python evals/download_footage.py` (downloads the open-licence ones from Wikimedia Commons into `scratch/footage/`, trimmed to 15 s; large files, slow first run). `river_approach_15s.mp4` is not included because its source is unknown. The Hurulu clip is cut from the start of the source file, which may be a different 15 s than the one used for the first runs, so its results can differ.

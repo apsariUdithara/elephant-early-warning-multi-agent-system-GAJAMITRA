@@ -8,76 +8,44 @@ Every year in Sri Lanka, hundreds of elephants and more than a hundred people di
 
 ## How it works
 
-```
-boundary-camera clip
-      │
-      ▼
-SAM 3.1 (Meta Model API) ── "elephant" ──► per-frame boxes with IDs that stay the same across frames
-      │
-      ▼
-track.py ── where each elephant touches the ground, velocity, distance to the village boundary, ETA, risk level
-      │
-      ▼
-Muse Spark 1.3 (vision, JSON output)
-  • reads behaviour from keyframes: calm / alert / warning / aggressive / conflict-risk, calves
-  • proposes alerts (English, Sinhala, Tamil) and an officer report; it sends nothing itself
-      │
-      ▼
-policy.py (deterministic guard) ── sets the alert level from the tracker risk, fills in a template if the
-                                   model is silent or invalid, adds the officer report, records every change
-      │
-      ▼
-dashboard ── live boxes, trails, predicted paths, risk level, what the guard decided and why
-```
+1. **Track.** SAM 3.1 finds every elephant in the boundary-camera clip and keeps one ID per animal. `track.py` turns the boxes into distance to the village boundary, speed, arrival time and a risk level.
+2. **Read.** Muse Spark 1.3 looks at keyframes, judges behaviour (calm, alert, aggressive, calves) and proposes alerts in English, Sinhala and Tamil. It sends nothing itself.
+3. **Check.** A deterministic guard (`policy.py`, re-checked by Spring) sets the alert level from the tracker's risk, never from the model.
+4. **Warn.** The warning goes to villagers by SMS at once. Only an escalation to "danger" waits for a wildlife officer, and a timeout sends it anyway.
 
-| Meta model | What it does here |
+| Meta model | Role |
 |---|---|
-| SAM 3.1 | Tracks each elephant across the clip from a text prompt. IDs stay the same, so no separate tracker is needed |
-| Muse Spark 1.3 | Classifies behaviour from video frames and proposes the response and the alerts in three languages; a deterministic guard decides what is sent |
+| SAM 3.1 | Tracks each elephant from a text prompt, with stable IDs |
+| Muse Spark 1.3 | Reads behaviour, proposes the alerts, reviews them, and judges alert quality in the evals |
+
+## The dashboard
+
+Screenshots from a real run of the app (the demo site is in test mode, so alerts are stored and no SMS is sent).
+
+| | |
+|---|---|
+| ![New analysis: the officer marks the village boundary on the clip](docs/screenshots/new-analysis-boundary.jpg) | ![SAM 3.1 tracking: every elephant boxed with a stable ID](docs/screenshots/sam-tracking.jpg) |
+| **New analysis.** Choose a site, upload a clip, click two points on the boundary and one on the village side. | **Tracking.** SAM 3.1 boxes every elephant and keeps its ID across frames. |
+| ![Analysis: high risk, the warning sent in English, Sinhala and Tamil, and the officer report](docs/screenshots/analysis-alerts.jpg) | ![Approvals: the escalation, the frames the agents saw and the countdown](docs/screenshots/approvals.jpg) |
+| **Result.** Risk level, the warning in three languages, and the officer report with distance and arrival time. | **Approvals.** The warning has already gone out; the escalation waits for an officer and is sent automatically when time runs out. |
+| ![The whole interface in Sinhala](docs/screenshots/analysis-sinhala.jpg) | ![Sites and villagers: test or live mode and the approval rule](docs/screenshots/admin-sites.jpg) |
+| **Three languages.** The whole interface switches to Sinhala or Tamil. | **Admin.** Sites, villagers, test or live mode and the approval time limit. |
+
+**Light and dark themes.** The screens above use the dark theme; this is the analyses list in the light theme.
+
+<img src="docs/screenshots/analyses-light.jpg" alt="Analyses list in the light theme" width="60%">
 
 ## Architecture
 
-The target system is a Spring Boot backend, a Python LangGraph worker (responder and verifier agents, a deterministic guard, officer approval) and a React dashboard. Design decisions and trade-offs: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Build phases: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
-
-### System context
-Who uses GajaMitra and which external systems it depends on.
-
-![System context](docs/architecture/01-system-context.svg)
-
-### Containers
-Spring Boot owns the product and every side effect. The Python worker owns perception and reasoning, and calls Spring only through MCP tools.
+Spring Boot owns all data and every side effect. A Python LangGraph worker owns perception and reasoning and reaches Spring only through MCP tools and RabbitMQ. More diagrams, the data model and design decisions are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the build plan is [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 ![Containers](docs/architecture/02-containers.svg)
 
-### Agent pipeline
-The agents only propose. A deterministic guard sets their proposal to the level the tracker's evidence allows, and a wildlife officer approves escalations.
-
 ![Agent pipeline](docs/architecture/03-agent-graph.svg)
-
-### Safety layers
-Six checks sit between an agent's proposal and a villager's phone.
 
 ![Safety layers](docs/architecture/07-safety-layers.svg)
 
-<details>
-<summary><b>More diagrams:</b> one analysis end to end, data model, deployment</summary>
-
-#### One analysis, end to end
-The warning goes out before anyone is asked. Only the escalation to "danger" waits for the officer, and a timeout sends it anyway.
-
-![Analysis sequence](docs/architecture/04-analysis-sequence.svg)
-
-#### Data model
-UNIQUE idempotency keys make every alert, officer report and SMS happen at most once.
-
-![Data model](docs/architecture/05-data-model.svg)
-
-#### Deployment
-One VM running docker compose. Only Caddy publishes a port.
-
-![Deployment](docs/architecture/06-deployment.svg)
-
-</details>
+Also: [system context](docs/architecture/01-system-context.svg), [one analysis end to end](docs/architecture/04-analysis-sequence.svg), [data model](docs/architecture/05-data-model.svg), [deployment](docs/architecture/06-deployment.svg).
 
 ## Repository layout
 

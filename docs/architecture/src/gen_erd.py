@@ -17,7 +17,7 @@ T = {  # name: (col, y, rows)
                        "text_en, text_si, text_ta", "shadow  bool"]),
     "officer_report": (2, 640, ["id  UUID  PK", "analysis_id  FK → analysis", "idempotency_key  UNIQUE", "text"]),
     "approval_request": (3, 90, ["id  UUID  PK", "analysis_id  FK → analysis", "proposed_alert  JSONB",
-                                 "status  PENDING | APPROVED | REJECTED | TIMED_OUT", "expires_at",
+                                 "status  PENDING … TIMED_OUT", "expires_at",
                                  "decided_by  FK → app_user", "note, decided_at"]),
     "app_user": (3, 330, ["id  UUID  PK", "username  UNIQUE", "password_hash  BCrypt", "role  ADMIN | OFFICER"]),
     "audit_log": (3, 500, ["id  UUID  PK", "analysis_id  FK → analysis", "actor  AGENT | OFFICER | SYSTEM",
@@ -63,11 +63,11 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 {H}" width="
   <defs>
     <style>
       text{{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:#1f2933}}
-      .title{{font-size:22px;font-weight:700}}.sub{{font-size:13px;fill:#52606d}}
-      .tn{{font-size:14px;font-weight:700;fill:#14532d}}.c{{font-size:12px;fill:#334e68}}.k{{font-size:12px;fill:#1f2933;font-weight:600}}
+      .title{{font-size:26px;font-weight:700}}.sub{{font-size:16px;fill:#52606d}}
+      .tn{{font-size:17px;font-weight:700;fill:#14532d}}.c{{font-size:15px;fill:#334e68}}.k{{font-size:15px;fill:#1f2933;font-weight:600}}
       .tbl{{fill:#ffffff;stroke:#15803d;stroke-width:1.5}}.hdr{{fill:#dcfce7;stroke:#15803d;stroke-width:1.5}}
-      .rel{{stroke:#3e4c59;stroke-width:1.5;fill:none}}.card{{font-size:12px;font-weight:700;fill:#b45309}}
-      .lg{{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5;stroke-dasharray:6 4}}.s{{font-size:12px;fill:#52606d}}
+      .rel{{stroke:#3e4c59;stroke-width:1.5;fill:none}}.card{{font-size:15px;font-weight:700;fill:#b45309}}
+      .lg{{fill:#eff6ff;stroke:#1d4ed8;stroke-width:1.5;stroke-dasharray:6 4}}.s{{font-size:15px;fill:#52606d}}
     </style>
   </defs>
   <rect width="1210" height="{H}" fill="#ffffff"/>
